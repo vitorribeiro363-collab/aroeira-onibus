@@ -10,7 +10,7 @@ const DESTINO_LON = -48.611748253811975;
 // ════════════════════════════════════════════════════════════════════════════
 db.auth.getSession().then(({ data }) => {
   if (!data.session) {
-    window.location.href = "login.html";
+    window.location.href = "/aroeira-onibus/gestao/index.html";
     return;
   }
   const u = data.session.user;
@@ -23,7 +23,7 @@ db.auth.getSession().then(({ data }) => {
 
 async function sair() {
   await db.auth.signOut();
-  window.location.href = "login.html";
+  window.location.href = "/aroeira-onibus/gestao/index.html";
 }
 
 // ════════════════════════════════════════════════════════════════════════════
