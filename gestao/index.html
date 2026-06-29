@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Gestão de Frotas | Bioenergética Aroeira</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/login.css" />
+  </head>
+  <body class="login-page">
+    <div class="login-wrap">
+      <div class="login-logo">
+        <img
+          src="https://www.bioaroeira.com.br/wp-content/uploads/2025/04/LOGO-BIOENERGETICA-AROEIRA.png"
+          alt="Bioenergética Aroeira"
+        />
+        <p>Sistema de Gestão de Frotas</p>
+      </div>
+
+      <div class="login-card">
+        <h2>Entrar</h2>
+
+        <input
+          id="loginEmail"
+          class="input"
+          type="email"
+          placeholder="E-mail corporativo"
+          autocomplete="email"
+        />
+        <input
+          id="loginSenha"
+          class="input"
+          type="password"
+          placeholder="Senha"
+          autocomplete="current-password"
+        />
+
+        <div class="msg-erro" id="erroLogin"></div>
+
+        <button
+          class="btn btn-primary"
+          onclick="login()"
+          style="
+            width: 100%;
+            justify-content: center;
+            padding: 13px;
+            font-size: 15px;
+          "
+        >
+          <i class="fa-solid fa-right-to-bracket"></i> Entrar
+        </button>
+
+        <div class="loading" id="loadingLogin">
+          <i class="fa-solid fa-spinner fa-spin"></i> Entrando...
+        </div>
+      </div>
+
+      <div class="badge-sistema">
+        <i class="fa-solid fa-leaf"></i>
+        <span>Bioenergética Aroeira</span> · Gestão de Frotas
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script>
+      async function login() {
+        const email = document.getElementById("loginEmail").value.trim();
+        const senha = document.getElementById("loginSenha").value;
+        const erro = document.getElementById("erroLogin");
+        const loading = document.getElementById("loadingLogin");
+
+        erro.style.display = "none";
+        loading.style.display = "block";
+
+        const { error } = await db.auth.signInWithPassword({
+          email,
+          password: senha,
+        });
+
+        loading.style.display = "none";
+
+        if (error) {
+          erro.textContent = "E-mail ou senha incorretos.";
+          erro.style.display = "block";
+          return;
+        }
+
+        window.location.href = "app.html";
+      }
+
+      // Enter para logar
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") login();
+      });
+
+      // Redireciona se já logado
+      db.auth.getSession().then(({ data }) => {
+        if (data.session) window.location.href = "app.html";
+      });
+    </script>
+  </body>
+</html>

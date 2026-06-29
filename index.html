@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leitor de Embarque - Bioenergética Aroeira S.A.</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="data:," />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0f2d1c" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Sora", sans-serif;
+        background: #0f2d1c;
+        color: #fff;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      .logo {
+        height: 144px;
+        filter: brightness(0) invert(1);
+        margin-bottom: 16px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 20px;
+        width: 100%;
+        max-width: 420px;
+        color: #1a2e1f;
+      }
+      h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a4a2e;
+        margin-bottom: 16px;
+      }
+      select,
+      input {
+        width: 100%;
+        padding: 12px;
+        border: 1.5px solid #dde6de;
+        border-radius: 8px;
+        font-size: 16px;
+        margin-bottom: 12px;
+        background: #fff;
+        color: #1a2e1f;
+      }
+      .btn {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-bottom: 10px;
+        background: #1a4a2e;
+        color: #fff;
+      }
+      .input-leitor {
+        font-size: 16px;
+        text-align: center;
+        padding: 22px;
+        border: 3px solid #1a4a2e;
+        border-radius: 12px;
+        margin: 16px 0;
+      }
+      .contador {
+        text-align: center;
+        font-size: 72px;
+        font-weight: 700;
+        color: #1a4a2e;
+        margin: 12px 0 4px;
+      }
+      .contador-label {
+        text-align: center;
+        font-size: 16px;
+        color: #6b7c6d;
+        margin-bottom: 16px;
+      }
+      .resultado {
+        border-radius: 10px;
+        padding: 24px 16px;
+        margin-top: 12px;
+        font-size: 22px;
+        font-weight: 700;
+        text-align: center;
+        display: none;
+      }
+      .resultado.ok {
+        background: #e8f5ec;
+        color: #1a4a2e;
+      }
+      .resultado.erro {
+        background: #fdecea;
+        color: #c0392b;
+      }
+      .resultado.aviso {
+        background: #fef9e7;
+        color: #b7950b;
+      }
+      .historico {
+        margin-top: 16px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .historico-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+      }
+      .historico-item .mat {
+        font-weight: 700;
+        color: #1a4a2e;
+      }
+      .historico-item .hora {
+        color: #6b7c6d;
+      }
+      .resultado.info {
+        background: #e8f4fd;
+        color: #1a6fa8;
+      }
+      * {
+        font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <img
+      class="logo"
+      src="https://www.bioaroeira.com.br/wp-content/uploads/2025/04/LOGO-BIOENERGETICA-AROEIRA.png"
+      alt="Aroeira"
+    />
+
+    <div class="card" id="telaConfig">
+      <h2>Selecione a linha</h2>
+      <select id="selLinha">
+        <option value="">Selecione a linha...</option>
+      </select>
+      <button class="btn" onclick="iniciar()">Iniciar embarques</button>
+    </div>
+
+    <div class="card" id="telaLeitor" style="display: none">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        "
+      >
+        <div>
+          <div style="font-size: 12px; color: #6b7c6d">Linha</div>
+          <div style="font-weight: 700; color: #1a4a2e" id="infoLinha">—</div>
+        </div>
+      </div>
+
+      <div class="contador" id="contador">0</div>
+      <div class="contador-label">embarques registrados</div>
+
+      <input
+        id="inputLeitor"
+        class="input-leitor"
+        placeholder="Aproxime o crachá do leitor"
+        autocomplete="off"
+      />
+
+      <div class="resultado" id="resultado"></div>
+      <div class="historico" id="historico"></div>
+      <div
+        id="badgePendentes"
+        style="
+          display: none;
+          background: #fef9e7;
+          color: #b7950b;
+          border-radius: 8px;
+          padding: 8px;
+          text-align: center;
+          font-size: 12px;
+          font-weight: 600;
+          margin-bottom: 12px;
+        "
+      ></div>
+
+      <button
+        class="btn"
+        style="background: #333; color: #fff; margin-top: 8px; font-size: 13px"
+        onclick="verHistoricoLocal()"
+      >
+        🔍 Debug histórico
+      </button>
+
+      <button
+        class="btn"
+        style="background: #eee; color: #333; margin-top: 16px"
+        onclick="trocarLinha()"
+      >
+        ← Trocar linha
+      </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const db = window.supabase.createClient(
+        "https://pffmtvsnbiogtgxsxeee.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmZm10dnNuYmlvZ3RneHN4ZWVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NjYwMTksImV4cCI6MjA5NzI0MjAxOX0.8fz8xdI6rDIVpuwuRGMbYkFLYtGMitfC8HhTQmZUGj0",
+      );
+
+      // ─── ESTADO GLOBAL ──────────────────────────────────────────────────────────
+      let linhaAtual = null;
+      let contadorEmbarques = 0;
+      const historico = [];
+
+      // ─── HISTÓRICO LOCAL PARA BLOQUEIO OFFLINE ────────────────────────────────────
+      const CHAVE_HISTORICO_LOCAL = "historico_leituras_local";
+
+      function getHistoricoLocal() {
+        return JSON.parse(localStorage.getItem(CHAVE_HISTORICO_LOCAL) || "[]");
+      }
+
+      function salvarHistoricoLocal(matricula, linha, timestamp) {
+        const historico = getHistoricoLocal();
+        historico.push({ matricula, linha, timestamp });
+        const umDiaAtras = Date.now() - 24 * 60 * 60 * 1000;
+        const limpo = historico.filter((h) => h.timestamp > umDiaAtras);
+        localStorage.setItem(CHAVE_HISTORICO_LOCAL, JSON.stringify(limpo));
+      }
+
+      function jaLeuRecente(matricula, linha) {
+        const umaHoraAtras = Date.now() - 60 * 60 * 1000;
+        const historico = getHistoricoLocal();
+        return historico.some(
+          (h) =>
+            h.matricula === matricula &&
+            h.linha === linha &&
+            h.timestamp > umaHoraAtras,
+        );
+      }
+
+      function beep(sucesso = true) {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = sucesso ? 1000 : 400;
+        osc.type = "square";
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+      }
+
+      // ─── TIMEOUT MANUAL PARA QUERIES — evita travar com internet "morta" ─────────
+      function comTimeout(promise, ms = 8000) {
+        return Promise.race([
+          promise,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Tempo esgotado")), ms),
+          ),
+        ]);
+      }
+
+      // ─── CARREGAMENTO DE LINHAS ────────────────────────────────────────────────
+      async function carregarLinhas() {
+        const sel = document.getElementById("selLinha");
+
+        if (navigator.onLine) {
+          try {
+            const { data } = await comTimeout(
+              db.from("pontos").select("linha"),
+            );
+            if (data) {
+              const linhas = [...new Set(data.map((p) => p.linha))].sort();
+              localStorage.setItem("cache_linhas", JSON.stringify(linhas));
+              sel.innerHTML = '<option value="">Selecione...</option>';
+              linhas.forEach(
+                (l) => (sel.innerHTML += `<option value="${l}">${l}</option>`),
+              );
+              return;
+            }
+          } catch (e) {
+            console.warn("Falha ao carregar linhas online:", e.message);
+          }
+        }
+
+        // Offline, falhou ou deu timeout — usa cache local
+        const cache = JSON.parse(localStorage.getItem("cache_linhas") || "[]");
+        sel.innerHTML = cache.length
+          ? '<option value="">Selecione...</option>'
+          : '<option value="">Sem conexão e sem cache</option>';
+        cache.forEach(
+          (l) => (sel.innerHTML += `<option value="${l}">${l}</option>`),
+        );
+      }
+
+      async function precarregarVinculosRfid() {
+        if (!navigator.onLine) return;
+
+        try {
+          const { data } = await comTimeout(
+            db
+              .from("funcionarios")
+              .select("rfid_id, matricula")
+              .not("rfid_id", "is", null),
+          );
+          if (!data) return;
+
+          const cache = {};
+          data.forEach((v) => (cache[v.rfid_id] = v.matricula));
+          localStorage.setItem("cache_vinculos", JSON.stringify(cache));
+
+          console.log(`${data.length} vínculos RFID pré-carregados.`);
+        } catch (e) {
+          console.warn("Falha ao pré-carregar vínculos:", e.message);
+        }
+      }
+
+      // ─── INÍCIO / TROCA DE LINHA ───────────────────────────────────────────────
+      function iniciar() {
+        const linha = document.getElementById("selLinha").value;
+        if (!linha) {
+          alert("Selecione a linha.");
+          return;
+        }
+
+        linhaAtual = linha;
+        document.getElementById("infoLinha").textContent = linha;
+
+        document.getElementById("telaConfig").style.display = "none";
+        document.getElementById("telaLeitor").style.display = "block";
+
+        const input = document.getElementById("inputLeitor");
+        input.focus();
+        document.addEventListener("click", () => input.focus());
+        window.addEventListener("blur", () =>
+          setTimeout(() => input.focus(), 100),
+        );
+
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const valor = input.value.trim();
+            input.value = "";
+            if (valor) processarLeituraRfid(valor);
+          }
+        });
+
+        atualizarBadgePendentes();
+        if (navigator.onLine) sincronizarFila();
+      }
+
+      // Conta embarques de UMA vinda à usina — zera só ao trocar de linha/ônibus
+      function trocarLinha() {
+        contadorEmbarques = 0;
+        historico.length = 0;
+        document.getElementById("contador").textContent = "0";
+        document.getElementById("historico").innerHTML = "";
+        document.getElementById("telaLeitor").style.display = "none";
+        document.getElementById("telaConfig").style.display = "block";
+      }
+
+      // ─── FILA OFFLINE ──────────────────────────────────────────────────────────
+      const CHAVE_FILA = "embarques_pendentes";
+
+      function salvarPendente(registro) {
+        const fila = JSON.parse(localStorage.getItem(CHAVE_FILA) || "[]");
+        fila.push(registro);
+        localStorage.setItem(CHAVE_FILA, JSON.stringify(fila));
+        atualizarBadgePendentes();
+      }
+
+      function getFila() {
+        return JSON.parse(localStorage.getItem(CHAVE_FILA) || "[]");
+      }
+
+      function limparFila(restante) {
+        localStorage.setItem(CHAVE_FILA, JSON.stringify(restante));
+        atualizarBadgePendentes();
+      }
+
+      function atualizarBadgePendentes() {
+        const fila = getFila();
+        const badge = document.getElementById("badgePendentes");
+        if (!badge) return;
+        if (fila.length > 0) {
+          badge.textContent = `${fila.length} pendente(s) para sincronizar`;
+          badge.style.display = "block";
+        } else {
+          badge.style.display = "none";
+        }
+      }
+
+      async function sincronizarFila() {
+        const fila = getFila();
+        if (!fila.length) return;
+
+        const restante = [];
+        let sucesso = 0;
+
+        for (const registro of fila) {
+          try {
+            const { error } = await comTimeout(
+              db.from("embarques").insert(registro),
+            );
+            if (error) {
+              if (error.code === "23505") {
+                sucesso++;
+              } else {
+                restante.push(registro);
+              }
+            } else {
+              sucesso++;
+            }
+          } catch (e) {
+            restante.push(registro);
+          }
+        }
+
+        limparFila(restante);
+        if (sucesso > 0) console.log(`${sucesso} embarque(s) sincronizado(s).`);
+      }
+
+      // Sincroniza automaticamente quando a conexão voltar (único listener)
+      window.addEventListener("online", () => {
+        console.log("Conexão restabelecida — sincronizando...");
+        sincronizarFila();
+        precarregarVinculosRfid();
+      });
+
+      setInterval(() => {
+        if (navigator.onLine) sincronizarFila();
+      }, 15000);
+
+      // ─── PROCESSAMENTO DA LEITURA RFID ────────────────────────────────────────
+      async function processarLeituraRfid(rfidId) {
+        console.time("leitura-total");
+        mostrarResultado("🔄 Lendo...", "info");
+
+        let matricula = null;
+
+        if (navigator.onLine) {
+          try {
+            const { data: vinculo, error: errVinculo } = await comTimeout(
+              db
+                .from("funcionarios")
+                .select("matricula")
+                .eq("rfid_id", rfidId)
+                .single(),
+            );
+
+            if (errVinculo || !vinculo) {
+              beep(false);
+              mostrarResultado(
+                "❌ Crachá não cadastrado.<br>Procure a Gestão de Frotas.",
+                "erro",
+              );
+              console.timeEnd("leitura-total");
+              return;
+            }
+            matricula = vinculo.matricula;
+
+            if (jaLeuRecente(matricula, linhaAtual)) {
+              beep(false);
+              mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
+              console.timeEnd("leitura-total");
+              return;
+            }
+
+            const cacheVinculos = JSON.parse(
+              localStorage.getItem("cache_vinculos") || "{}",
+            );
+            cacheVinculos[rfidId] = matricula;
+            localStorage.setItem(
+              "cache_vinculos",
+              JSON.stringify(cacheVinculos),
+            );
+          } catch (e) {
+            // Timeout ou falha de rede mesmo com onLine=true — cai pro cache local
+            console.warn(
+              "Consulta online falhou, tentando cache local:",
+              e.message,
+            );
+            const cacheVinculos = JSON.parse(
+              localStorage.getItem("cache_vinculos") || "{}",
+            );
+            matricula = cacheVinculos[rfidId];
+
+            if (!matricula) {
+              beep(false);
+              mostrarResultado(
+                "⚠️ Conexão instável e crachá não está no cache local.<br>Tente novamente.",
+                "erro",
+              );
+              console.timeEnd("leitura-total");
+              return;
+            }
+
+            if (jaLeuRecente(matricula, linhaAtual)) {
+              beep(false);
+              mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
+              console.timeEnd("leitura-total");
+              return;
+            }
+          }
+        } else {
+          const cacheVinculos = JSON.parse(
+            localStorage.getItem("cache_vinculos") || "{}",
+          );
+          matricula = cacheVinculos[rfidId];
+
+          if (!matricula) {
+            beep(false);
+            mostrarResultado(
+              "⚠️ Sem internet e crachá não está no cache local.<br>Tente quando houver conexão.",
+              "erro",
+            );
+            console.timeEnd("leitura-total");
+            return;
+          }
+
+          if (jaLeuRecente(matricula, linhaAtual)) {
+            beep(false);
+            mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
+            console.timeEnd("leitura-total");
+            return;
+          }
+        }
+
+        // Registra o embarque SEM esperar o GPS
+        const agora = new Date();
+        const idUnico = `${rfidId}_${agora.getTime()}`;
+        const registro = {
+          matricula,
+          linha: linhaAtual,
+          hora: agora.toISOString(),
+          latitude: null,
+          longitude: null,
+          id_unico: idUnico,
+        };
+
+        if (navigator.onLine) {
+          try {
+            const { error } = await comTimeout(
+              db.from("embarques").insert(registro),
+            );
+            if (error) salvarPendente(registro);
+          } catch (e) {
+            salvarPendente(registro);
+          }
+        } else {
+          salvarPendente(registro);
+        }
+
+        contadorEmbarques++;
+        document.getElementById("contador").textContent = contadorEmbarques;
+        beep(true);
+        salvarHistoricoLocal(matricula, linhaAtual, agora.getTime());
+
+        const horaStr = agora.toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        mostrarResultado(`✅ ${matricula} — ${horaStr}`, "ok");
+        adicionarHistorico(matricula, horaStr);
+
+        console.timeEnd("leitura-total");
+
+        // Busca GPS em segundo plano e atualiza depois, sem travar a leitura
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            if (navigator.onLine) {
+              try {
+                await comTimeout(
+                  db
+                    .from("embarques")
+                    .update({
+                      latitude: pos.coords.latitude,
+                      longitude: pos.coords.longitude,
+                    })
+                    .eq("id_unico", idUnico),
+                );
+              } catch (e) {
+                console.warn("Falha ao salvar GPS:", e.message);
+              }
+            }
+          },
+          (err) => console.warn("GPS falhou:", err.message),
+          { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 },
+        );
+      }
+
+      function mostrarResultado(msg, tipo) {
+        const el = document.getElementById("resultado");
+        el.innerHTML = msg;
+        el.className = `resultado ${tipo}`;
+        el.style.display = "block";
+        if (tipo !== "info") {
+          setTimeout(
+            () => (el.style.display = "none"),
+            tipo === "erro" && msg.includes("Gestão") ? 3500 : 2000,
+          );
+        }
+      }
+
+      function adicionarHistorico(matricula, hora) {
+        historico.unshift({ matricula, hora });
+        document.getElementById("historico").innerHTML = historico
+          .slice(0, 20)
+          .map(
+            (h) => `
+        <div class="historico-item">
+          <span class="mat">${h.matricula}</span>
+          <span class="hora">${h.hora}</span>
+        </div>`,
+          )
+          .join("");
+      }
+
+      // ─── INICIALIZAÇÃO ─────────────────────────────────────────────────────────
+      carregarLinhas();
+      precarregarVinculosRfid();
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("./sw.js")
+          .then(() => console.log("Service Worker registrado"))
+          .catch((err) => console.error(err));
+      }
+    </script>
+  </body>
+</html>

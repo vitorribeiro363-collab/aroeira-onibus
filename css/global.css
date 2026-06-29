@@ -1,0 +1,134 @@
+:root {
+  --verde-escuro: #1a4a2e;
+  --verde-medio: #2d6e47;
+  --verde-claro: #3d8f5f;
+  --verde-suave: #e8f5ec;
+  --dourado: #c8a84b;
+  --dourado-claro: #f0dfa0;
+  --branco: #ffffff;
+  --cinza-claro: #f5f7f5;
+  --cinza-borda: #dde6de;
+  --cinza-texto: #6b7c6d;
+  --texto-escuro: #1a2e1f;
+  --erro: #c0392b;
+  --sucesso: #27ae60;
+
+  --sombra: 0 2px 12px rgba(26, 74, 46, 0.1);
+  --sombra-hover: 0 4px 20px rgba(26, 74, 46, 0.18);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transicao: all 0.2s ease;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+}
+
+body {
+  font-family: "Sora", Arial, sans-serif;
+  background: var(--cinza-claro);
+  color: var(--texto-escuro);
+  min-height: 100vh;
+  font-weight: 400;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transicao);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--verde-medio);
+  color: var(--branco);
+}
+.btn-primary:hover {
+  background: var(--verde-escuro);
+  box-shadow: var(--sombra-hover);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--verde-medio);
+  border: 1.5px solid var(--verde-medio);
+}
+.btn-outline:hover {
+  background: var(--verde-suave);
+}
+
+.btn-danger {
+  background: var(--erro);
+  color: var(--branco);
+}
+.btn-danger:hover {
+  background: #a93226;
+}
+
+.btn-gold {
+  background: var(--dourado);
+  color: var(--verde-escuro);
+}
+.btn-gold:hover {
+  background: #b8963e;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--cinza-borda);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--branco);
+  color: var(--texto-escuro);
+  transition: var(--transicao);
+  margin-bottom: 12px;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--verde-medio);
+  box-shadow: 0 0 0 3px rgba(45, 110, 71, 0.12);
+}
+
+/* NOTA: .card é redefinida em app.css (padding 24px, max-width 100%, box-sizing).
+   Como app.css carrega depois, aquela versão prevalece. Mantida aqui só como
+   fallback básico para páginas que usem apenas global.css (ex: login.html). */
+.card {
+  background: var(--branco);
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+  padding: 28px;
+}
+
+.loading {
+  text-align: center;
+  color: var(--cinza-texto);
+  font-size: 14px;
+  padding: 8px;
+  display: none;
+}
+
+.msg-erro {
+  color: var(--erro);
+  font-size: 13px;
+  text-align: center;
+  margin-top: 8px;
+  display: none;
+}
+.msg-sucesso {
+  color: var(--sucesso);
+  font-size: 13px;
+  text-align: center;
+  margin-top: 8px;
+  display: none;
+}

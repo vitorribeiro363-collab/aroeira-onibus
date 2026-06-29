@@ -1,0 +1,21 @@
+{
+  "name": "Leitor de Embarque",
+  "short_name": "Embarque",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f2d1c",
+  "theme_color": "#0f2d1c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

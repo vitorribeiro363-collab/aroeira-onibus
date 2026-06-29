@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Otimizar Pontos - Análise</title>
+    <style>
+      body {
+        font-family: monospace;
+        background: #0f2d1c;
+        color: #eee;
+        padding: 20px;
+        white-space: pre-wrap;
+        font-size: 13px;
+      }
+      h2 {
+        color: #c8a84b;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Otimização de Pontos — k-means capacitado</h2>
+    <button onclick="rodar()" style="padding: 10px 20px; margin-bottom: 20px">
+      Calcular
+    </button>
+    <div id="saida">
+      Carregue clicando em Calcular. Pode levar alguns segundos (várias
+      iterações).
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const db = window.supabase.createClient(
+        "https://pffmtvsnbiogtgxsxeee.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmZm10dnNuYmlvZ3RneHN4ZWVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NjYwMTksImV4cCI6MjA5NzI0MjAxOX0.8fz8xdI6rDIVpuwuRGMbYkFLYtGMitfC8HhTQmZUGj0",
+      );
+
+      const RAIO_IDEAL_KM = 0.3;
+      const RAIO_MAX_KM = 0.5;
+      const CAPACIDADE_IDEAL = 44;
+      const CAPACIDADE_MAX = 49;
+      const MAX_ITERACOES = 60;
+
+      function distancia(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = ((lat2 - lat1) * Math.PI) / 180;
+        const dLon = ((lon2 - lon1) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      // ── K-MEANS CAPACITADO ────────────────────────────────────────────────────
+      function kMeansCapacitado(pessoas, k) {
+        if (pessoas.length === 0) return [];
+        if (k <= 0) k = 1;
+
+        let centros = [];
+        const restantesInit = [...pessoas];
+        centros.push({
+          lat: restantesInit[0].latitude,
+          lon: restantesInit[0].longitude,
+        });
+
+        while (centros.length < k && restantesInit.length > 1) {
+          let maisDistante = null,
+            maiorDistMin = -1;
+          for (const p of restantesInit) {
+            const distMin = Math.min(
+              ...centros.map((c) =>
+                distancia(c.lat, c.lon, p.latitude, p.longitude),
+              ),
+            );
+            if (distMin > maiorDistMin) {
+              maiorDistMin = distMin;
+              maisDistante = p;
+            }
+          }
+          if (maisDistante)
+            centros.push({
+              lat: maisDistante.latitude,
+              lon: maisDistante.longitude,
+            });
+          else break;
+        }
+
+        let atribuicao = new Array(pessoas.length).fill(-1);
+
+        for (let iter = 0; iter < MAX_ITERACOES; iter++) {
+          const capacidadeRestante = new Array(centros.length).fill(
+            CAPACIDADE_MAX,
+          );
+          const novaAtribuicao = new Array(pessoas.length).fill(-1);
+
+          const preferencias = pessoas.map((p, idx) => {
+            const dists = centros.map((c, ci) => ({
+              ci,
+              d: distancia(c.lat, c.lon, p.latitude, p.longitude),
+            }));
+            dists.sort((a, b) => a.d - b.d);
+            return { idx, ordem: dists };
+          });
+
+          preferencias.sort((a, b) => a.ordem[0].d - b.ordem[0].d);
+
+          for (const { idx, ordem } of preferencias) {
+            for (const { ci } of ordem) {
+              if (capacidadeRestante[ci] > 0) {
+                novaAtribuicao[idx] = ci;
+                capacidadeRestante[ci]--;
+                break;
+              }
+            }
+          }
+
+          const somaLat = new Array(centros.length).fill(0);
+          const somaLon = new Array(centros.length).fill(0);
+          const contagem = new Array(centros.length).fill(0);
+
+          pessoas.forEach((p, idx) => {
+            const ci = novaAtribuicao[idx];
+            somaLat[ci] += p.latitude;
+            somaLon[ci] += p.longitude;
+            contagem[ci]++;
+          });
+
+          let movimentoTotal = 0;
+          const novosCentros = centros.map((c, ci) => {
+            if (contagem[ci] === 0) return c;
+            const novoLat = somaLat[ci] / contagem[ci];
+            const novoLon = somaLon[ci] / contagem[ci];
+            movimentoTotal += distancia(c.lat, c.lon, novoLat, novoLon);
+            return { lat: novoLat, lon: novoLon };
+          });
+
+          centros = novosCentros;
+          atribuicao = novaAtribuicao;
+
+          if (movimentoTotal < 0.001) break;
+        }
+
+        const clusters = centros.map((c) => ({
+          centroLat: c.lat,
+          centroLon: c.lon,
+          pessoas: [],
+        }));
+        pessoas.forEach((p, idx) => {
+          if (atribuicao[idx] >= 0) clusters[atribuicao[idx]].pessoas.push(p);
+        });
+
+        return clusters
+          .filter((c) => c.pessoas.length > 0)
+          .map((c) => ({
+            centroLat:
+              c.pessoas.reduce((s, p) => s + p.latitude, 0) / c.pessoas.length,
+            centroLon:
+              c.pessoas.reduce((s, p) => s + p.longitude, 0) / c.pessoas.length,
+            pessoas: c.pessoas,
+          }));
+      }
+
+      // ── PÓS-PROCESSAMENTO 2: funde clusters minúsculos (1-2 pessoas, sobras de
+      // outliers na inicialização) ao cluster vizinho mais próximo, desde que isso
+      // não estoure a capacidade máxima ──
+      function fundirClustersMinusculos(clusters) {
+        const TAMANHO_MINIMO = 3;
+        let resultado = [...clusters];
+        let mudou = true;
+
+        while (mudou) {
+          mudou = false;
+          const idxPequeno = resultado.findIndex(
+            (c) => c.pessoas.length < TAMANHO_MINIMO,
+          );
+          if (idxPequeno === -1) break;
+
+          const pequeno = resultado[idxPequeno];
+          let melhorVizinho = -1,
+            menorRaioResultante = Infinity;
+
+          resultado.forEach((c, i) => {
+            if (i === idxPequeno) return;
+            if (c.pessoas.length + pequeno.pessoas.length > CAPACIDADE_MAX)
+              return;
+
+            const pessoasJuntas = [...c.pessoas, ...pequeno.pessoas];
+            const centroLat =
+              pessoasJuntas.reduce((s, p) => s + p.latitude, 0) /
+              pessoasJuntas.length;
+            const centroLon =
+              pessoasJuntas.reduce((s, p) => s + p.longitude, 0) /
+              pessoasJuntas.length;
+            const raioResultante = Math.max(
+              ...pessoasJuntas.map((p) =>
+                distancia(centroLat, centroLon, p.latitude, p.longitude),
+              ),
+            );
+
+            if (raioResultante < menorRaioResultante) {
+              menorRaioResultante = raioResultante;
+              melhorVizinho = i;
+            }
+          });
+
+          if (melhorVizinho === -1) break; // ninguém tem espaço, deixa como está
+
+          const fundido = {
+            pessoas: [...resultado[melhorVizinho].pessoas, ...pequeno.pessoas],
+          };
+          fundido.centroLat =
+            fundido.pessoas.reduce((s, p) => s + p.latitude, 0) /
+            fundido.pessoas.length;
+          fundido.centroLon =
+            fundido.pessoas.reduce((s, p) => s + p.longitude, 0) /
+            fundido.pessoas.length;
+
+          resultado = resultado.filter(
+            (_, i) => i !== idxPequeno && i !== melhorVizinho,
+          );
+          resultado.push(fundido);
+          mudou = true;
+        }
+
+        return resultado;
+      }
+
+      // ── PÓS-PROCESSAMENTO 1: separa clusters geograficamente esticados demais ──
+      function dividirClustersGrandesDemais(clusters) {
+        const resultado = [];
+        for (const c of clusters) {
+          const raioReal = Math.max(
+            ...c.pessoas.map((p) =>
+              distancia(c.centroLat, c.centroLon, p.latitude, p.longitude),
+            ),
+          );
+
+          if (raioReal <= RAIO_MAX_KM || c.pessoas.length < 4) {
+            resultado.push(c);
+            continue;
+          }
+
+          const subClusters = kMeansCapacitado(c.pessoas, 2);
+          resultado.push(...subClusters);
+        }
+        return resultado;
+      }
+
+      // ── DISTRIBUIÇÃO FINAL: aloca os pontos (já clusterizados) entre as 7 linhas
+      // existentes, respeitando capacidade ≤49/linha. Estratégia: processa pontos
+      // do maior para o menor (mais difícil de encaixar primeiro); para cada um,
+      // escolhe a linha com vaga suficiente cujo ponto de referência mais próximo
+      // está mais perto — preservando coerência geográfica da rota.
+      function distribuirPontosEntreLinhas(clusters, pontos, linhasExistentes) {
+        const ocupacaoLinha = {};
+        linhasExistentes.forEach((l) => (ocupacaoLinha[l] = 0));
+
+        const pontosOrdenados = [...clusters].sort(
+          (a, b) => b.pessoas.length - a.pessoas.length,
+        );
+        const distribuicao = []; // { cluster, linha, distancia, pontoRef }
+
+        for (const c of pontosOrdenados) {
+          let melhorLinha = null,
+            menorDist = Infinity,
+            melhorPontoRef = null;
+
+          for (const linha of linhasExistentes) {
+            const vagaRestante = CAPACIDADE_MAX - ocupacaoLinha[linha];
+            if (vagaRestante < c.pessoas.length) continue; // não cabe nessa linha
+
+            const pontosLinha = pontos.filter((p) => p.linha === linha);
+            for (const p of pontosLinha) {
+              const d = distancia(
+                c.centroLat,
+                c.centroLon,
+                parseFloat(p.latitude),
+                parseFloat(p.longitude),
+              );
+              if (d < menorDist) {
+                menorDist = d;
+                melhorLinha = linha;
+                melhorPontoRef = p.nome;
+              }
+            }
+          }
+
+          if (melhorLinha) {
+            ocupacaoLinha[melhorLinha] += c.pessoas.length;
+            distribuicao.push({
+              cluster: c,
+              linha: melhorLinha,
+              distancia: menorDist,
+              pontoRef: melhorPontoRef,
+            });
+          } else {
+            // Não coube em nenhuma linha com vaga — precisa de decisão manual
+            distribuicao.push({
+              cluster: c,
+              linha: null,
+              distancia: null,
+              pontoRef: null,
+            });
+          }
+        }
+
+        return { distribuicao, ocupacaoLinha };
+      }
+
+      async function rodar() {
+        const saida = document.getElementById("saida");
+        saida.textContent = "Carregando dados...\n";
+        await new Promise((r) => setTimeout(r, 50));
+
+        const { data: funcs } = await db
+          .from("funcionarios")
+          .select("*")
+          .not("latitude", "is", null)
+          .eq("status", "ativo");
+
+        const { data: pontos } = await db.from("pontos").select("*");
+
+        if (!funcs || !pontos) {
+          saida.textContent = "Erro ao carregar dados.";
+          return;
+        }
+
+        function encontrarMelhorPontoBalanceado(
+          lat,
+          lon,
+          pontos,
+          ocupacaoLinhas,
+        ) {
+          let menorDist = Infinity,
+            nomeMaisProximo = null;
+          for (const p of pontos) {
+            const d = distancia(
+              lat,
+              lon,
+              parseFloat(p.latitude),
+              parseFloat(p.longitude),
+            );
+            if (d < menorDist) {
+              menorDist = d;
+              nomeMaisProximo = p.nome;
+            }
+          }
+          const linhasNoPonto = pontos.filter(
+            (p) => p.nome === nomeMaisProximo,
+          );
+          let escolhido = null,
+            menorOcup = Infinity;
+          for (const p of linhasNoPonto) {
+            const oc = ocupacaoLinhas[p.linha] || 0;
+            if (oc < menorOcup) {
+              menorOcup = oc;
+              escolhido = { ponto: p, distancia: menorDist };
+            }
+          }
+          return escolhido;
+        }
+
+        function ehTurnoA(jornada) {
+          const j = (jornada || "").toLowerCase();
+          return (
+            !j.includes("turno b") &&
+            !j.includes("b -") &&
+            !j.includes("turno c") &&
+            !j.includes("c -")
+          );
+        }
+
+        const funcsTurnoA = funcs.filter((f) => ehTurnoA(f.jornada));
+
+        saida.textContent = `${funcsTurnoA.length} de ${funcs.length} colaboradores são Turno A + ADM.\nRodando k-means (pode levar alguns segundos)...\n`;
+        await new Promise((r) => setTimeout(r, 50));
+
+        // ── DISTÂNCIA ATUAL (referência) ─────────────────────────────────────────
+        const ocupacaoLinhasAtual = {};
+        let somaDistAtual = 0,
+          countDistAtual = 0;
+
+        for (const f of funcsTurnoA) {
+          const r =
+            f.ponto_fixo && f.linha_fixa
+              ? {
+                  ponto: pontos.find(
+                    (p) => p.nome === f.ponto_fixo && p.linha === f.linha_fixa,
+                  ),
+                  distancia: 0,
+                }
+              : encontrarMelhorPontoBalanceado(
+                  f.latitude,
+                  f.longitude,
+                  pontos,
+                  ocupacaoLinhasAtual,
+                );
+
+          if (!r?.ponto) continue;
+          ocupacaoLinhasAtual[r.ponto.linha] =
+            (ocupacaoLinhasAtual[r.ponto.linha] || 0) + 1;
+          somaDistAtual += distancia(
+            f.latitude,
+            f.longitude,
+            parseFloat(r.ponto.latitude),
+            parseFloat(r.ponto.longitude),
+          );
+          countDistAtual++;
+        }
+        const mediaAtualM = countDistAtual
+          ? (somaDistAtual / countDistAtual) * 1000
+          : 0;
+
+        // ── K-MEANS: k inicial com folga de 20% sobre a ocupação ideal, para dar
+        // espaço ao algoritmo encontrar uma geografia coerente sem forçar excesso ──
+        const kInicial = Math.max(
+          1,
+          Math.ceil((funcsTurnoA.length / CAPACIDADE_IDEAL) * 1.2),
+        );
+
+        let clusters = kMeansCapacitado(funcsTurnoA, kInicial);
+        // Divide clusters que ficaram geograficamente esticados (>500m de raio).
+        // Não funde os pequenos resultantes de volta — um ponto com poucas pessoas
+        // é preferível a forçar geografia ruim só para "encher" capacidade.
+        clusters = dividirClustersGrandesDemais(clusters);
+        clusters = dividirClustersGrandesDemais(clusters); // 2ª passada para casos residuais
+
+        // ── ASSOCIA CADA CLUSTER À LINHA EXISTENTE MAIS PRÓXIMA (referência) ──
+        // ── DISTRIBUI OS PONTOS ENTRE AS 7 LINHAS RESPEITANDO CAPACIDADE ─────────
+        const linhasExistentes = [...new Set(pontos.map((p) => p.linha))];
+        const { distribuicao, ocupacaoLinha } = distribuirPontosEntreLinhas(
+          clusters,
+          pontos,
+          linhasExistentes,
+        );
+
+        // ── MONTA SAÍDA ───────────────────────────────────────────────────────────
+        let texto = `\n${funcsTurnoA.length} colaboradores Turno A + ADM, agrupados em ${clusters.length} pontos via k-means.\n`;
+
+        let somaDistSugerida = 0,
+          countDistSugerida = 0;
+        let foraDoRaio = 0;
+        let semLinha = 0;
+
+        // Agrupa a distribuição por linha para imprimir organizado
+        const porLinhaFinal = {};
+        linhasExistentes.forEach((l) => (porLinhaFinal[l] = []));
+
+        distribuicao.forEach((d) => {
+          if (d.linha) porLinhaFinal[d.linha].push(d);
+          else semLinha++;
+
+          const c = d.cluster;
+          c.pessoas.forEach((p) => {
+            somaDistSugerida += distancia(
+              c.centroLat,
+              c.centroLon,
+              p.latitude,
+              p.longitude,
+            );
+            countDistSugerida++;
+          });
+          const raioReal = Math.max(
+            ...c.pessoas.map((p) =>
+              distancia(c.centroLat, c.centroLon, p.latitude, p.longitude),
+            ),
+          );
+          if (raioReal > RAIO_MAX_KM) foraDoRaio++;
+        });
+
+        Object.entries(porLinhaFinal)
+          .sort()
+          .forEach(([linha, lista]) => {
+            const totalLinha = lista.reduce(
+              (s, d) => s + d.cluster.pessoas.length,
+              0,
+            );
+            texto += `\n${"=".repeat(60)}\nLINHA ${linha} — ${totalLinha} pessoas / ${CAPACIDADE_MAX} capacidade (${lista.length} pontos)\n${"=".repeat(60)}\n`;
+
+            lista
+              .sort(
+                (a, b) => b.cluster.pessoas.length - a.cluster.pessoas.length,
+              )
+              .forEach((d, i) => {
+                const c = d.cluster;
+                const raioReal = Math.max(
+                  ...c.pessoas.map((p) =>
+                    distancia(
+                      c.centroLat,
+                      c.centroLon,
+                      p.latitude,
+                      p.longitude,
+                    ),
+                  ),
+                );
+                const alerta =
+                  raioReal > RAIO_MAX_KM
+                    ? " ⚠️ EXCEDE 500m"
+                    : raioReal > RAIO_IDEAL_KM
+                      ? " (300-500m)"
+                      : " (≤300m)";
+
+                texto += `\n  Ponto ${i + 1}: ${c.pessoas.length} pessoas\n`;
+                texto += `    Localização: ${c.centroLat.toFixed(6)}, ${c.centroLon.toFixed(6)}\n`;
+                texto += `    Link Maps: https://www.google.com/maps?q=${c.centroLat},${c.centroLon}\n`;
+                texto += `    Raio do grupo: ${(raioReal * 1000).toFixed(0)}m${alerta}\n`;
+                texto += `    Próximo ao ponto atual "${d.pontoRef}" (${(d.distancia * 1000).toFixed(0)}m)\n`;
+              });
+          });
+
+        if (semLinha > 0) {
+          texto += `\n${"=".repeat(60)}\n⚠️ ${semLinha} GRUPO(S) SEM LINHA COM VAGA\n${"=".repeat(60)}\n`;
+          distribuicao
+            .filter((d) => !d.linha)
+            .forEach((d) => {
+              texto += `  ${d.cluster.pessoas.length} pessoas em ${d.cluster.centroLat.toFixed(6)}, ${d.cluster.centroLon.toFixed(6)} — nenhuma linha tem vaga suficiente\n`;
+            });
+        }
+
+        const mediaSugeridaM = countDistSugerida
+          ? (somaDistSugerida / countDistSugerida) * 1000
+          : 0;
+        const ganhoM = mediaAtualM - mediaSugeridaM;
+        const ganhoPct = mediaAtualM > 0 ? (ganhoM / mediaAtualM) * 100 : 0;
+
+        texto += `\n${"#".repeat(60)}\nRESUMO GERAL\n${"#".repeat(60)}\n`;
+        texto += `Pontos sugeridos: ${clusters.length} (atuais: ${[...new Set(pontos.map((p) => p.nome))].length})\n`;
+        texto += `Grupos acima de 500m de raio: ${foraDoRaio}\n`;
+        texto += `Grupos sem linha com vaga: ${semLinha}\n\n`;
+        texto += `Distância média atual:    ${mediaAtualM.toFixed(0)}m por colaborador\n`;
+        texto += `Distância média sugerida: ${mediaSugeridaM.toFixed(0)}m por colaborador\n`;
+        texto += `Ganho: ${ganhoM >= 0 ? "−" : "+"}${Math.abs(ganhoM).toFixed(0)}m (${ganhoPct >= 0 ? "↓ melhora" : "↑ piora"} ${Math.abs(ganhoPct).toFixed(0)}%)\n\n`;
+
+        texto += `Ocupação final por linha (respeitando capacidade ≤${CAPACIDADE_MAX}):\n`;
+        Object.entries(ocupacaoLinha)
+          .sort()
+          .forEach(([linha, total]) => {
+            texto += `  Linha ${linha}: ${total} pessoas\n`;
+          });
+
+        saida.textContent = texto;
+        console.log(texto);
+      }
+    </script>
+  </body>
+</html>

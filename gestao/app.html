@@ -1,0 +1,2167 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <link rel="icon" href="data:," />
+    <link rel="icon" href="data:image/x-icon;base64," type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestão de Frotas - Bioenergética Aroeira</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/app.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <!-- ════════════════════════════════════════════════════════════════════
+         SIDEBAR
+         ════════════════════════════════════════════════════════════════════ -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+          <img
+            src="https://www.bioaroeira.com.br/wp-content/uploads/2025/04/LOGO-BIOENERGETICA-AROEIRA.png"
+            alt="Aroeira"
+          />
+        </div>
+
+        <nav class="sidebar-nav">
+          <div class="nav-label">Início</div>
+          <a class="nav-item active" onclick="ir('dashboard')"
+            ><i class="fa-solid fa-gauge-high"></i> Dashboard</a
+          >
+
+          <div class="nav-label">Colaboradores</div>
+          <a class="nav-item" onclick="ir('incluir')"
+            ><i class="fa-solid fa-user-plus"></i> Incluir</a
+          >
+          <a class="nav-item" onclick="ir('excluir')"
+            ><i class="fa-solid fa-user-minus"></i> Excluir</a
+          >
+          <a class="nav-item" onclick="ir('editar')"
+            ><i class="fa-solid fa-user-pen"></i> Editar</a
+          >
+          <a class="nav-item" onclick="ir('status')"
+            ><i class="fa-solid fa-user-clock"></i> Férias e Afastamentos</a
+          >
+          <a class="nav-item" onclick="ir('rfid')"
+            ><i class="fa-solid fa-id-card"></i> RFID</a
+          >
+
+          <div class="nav-label">Transporte</div>
+          <a class="nav-item" onclick="ir('rotas')"
+            ><i class="fa-solid fa-route"></i> Gestão de Rotas</a
+          >
+          <!-- <div class="nav-item" onclick="ir('fds')">
+            <i class="fa-solid fa-calendar-week"></i>
+            <span>Fim de Semana</span>
+          </div> -->
+          <a class="nav-item" onclick="ir('consulta')"
+            ><i class="fa-solid fa-magnifying-glass-location"></i> Consultar
+            Ponto</a
+          >
+          <a class="nav-item" onclick="ir('ocupacaoPonto')"
+            ><i class="fa-solid fa-map-pin"></i> Ocupação por Ponto</a
+          >
+          <a class="nav-item" onclick="ir('mapaOcupacao')"
+            ><i class="fa-solid fa-map-location-dot"></i> Mapa de Ocupação</a
+          >
+
+          <div class="nav-label">Relatórios</div>
+          <a class="nav-item" onclick="ir('relatorio')"
+            ><i class="fa-solid fa-file-lines"></i> Relatório de Pontos</a
+          >
+          <a class="nav-item" onclick="ir('conformidade')"
+            ><i class="fa-solid fa-clipboard-check"></i> Relatório de
+            Embarques</a
+          >
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="user-avatar" id="userAvatar">?</div>
+            <div>
+              <div class="user-name" id="userName">—</div>
+              <div class="user-email" id="userEmail">—</div>
+            </div>
+          </div>
+          <button class="btn-sair" onclick="sair()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair
+          </button>
+        </div>
+      </aside>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+         MAIN
+         ════════════════════════════════════════════════════════════════════ -->
+      <main class="main">
+        <div class="topbar">
+          <div>
+            <div class="topbar-title" id="topbarTitle">Dashboard</div>
+            <div class="topbar-sub" id="topbarSub">Visão geral do sistema</div>
+          </div>
+        </div>
+
+        <div class="page-content">
+          <!-- ══════════════════════════════ DASHBOARD ══════════════════════════════ -->
+          <div class="tela ativa" id="tela-dashboard">
+            <div class="grid-stats" id="gridStats">
+              <div class="stat-card">
+                <div class="stat-icon verde">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                  <div class="stat-numero" id="statFuncionarios">—</div>
+                  <div class="stat-label">Colaboradores cadastrados</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon dourado">
+                  <i class="fa-solid fa-location-crosshairs"></i>
+                </div>
+                <div>
+                  <div class="stat-numero" id="statGeo">—</div>
+                  <div class="stat-label">Colaboradores geocodificados</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon verde">
+                  <i class="fa-solid fa-user-check"></i>
+                </div>
+                <div>
+                  <div class="stat-numero" id="statAtivos">—</div>
+                  <div class="stat-label">Colaboradores ativos</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon dourado">
+                  <i class="fa-solid fa-umbrella-beach"></i>
+                </div>
+                <div>
+                  <div class="stat-numero" id="statFeriasAfastados">—</div>
+                  <div class="stat-label">
+                    Colaboradores de férias/afastados
+                  </div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon verde">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                  <div class="stat-numero" id="statRfid">—</div>
+                  <div class="stat-label">
+                    Com RFID <br />
+                    <span id="statRfidPct" style="color: var(--cinza-texto)"
+                      >—</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon dourado">
+                  <i class="fa-solid fa-bus"></i>
+                </div>
+                <div>
+                  <div class="stat-numero" id="statLinhas">—</div>
+                  <div class="stat-label">Linhas ativas</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon verde">
+                  <i class="fa-solid fa-map-pin"></i>
+                </div>
+                <div>
+                  <div class="stat-numero" id="statPontos">—</div>
+                  <div class="stat-label">Pontos de embarque</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card de embarques -->
+            <div class="card" style="margin-top: 20px">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 20px;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                "
+              >
+                <div
+                  style="
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    font-size: 16px;
+                  "
+                >
+                  <i class="fa-solid fa-id-card-clip"></i> Embarques Registrados
+                </div>
+                <select
+                  class="input"
+                  id="filtroLinhaEmbarques"
+                  style="margin: 0; width: 200px"
+                  onchange="carregarTodosEmbarques()"
+                >
+                  <option value="">Todas as linhas</option>
+                </select>
+              </div>
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                  gap: 16px;
+                "
+              >
+                <div
+                  style="
+                    background: var(--cinza-claro);
+                    border-radius: var(--radius-sm);
+                    padding: 18px;
+                    text-align: center;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 28px;
+                      font-weight: 700;
+                      color: var(--verde-escuro);
+                    "
+                    id="statEmbarquesHoje"
+                  >
+                    —
+                  </div>
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--cinza-texto);
+                      margin-top: 4px;
+                    "
+                  >
+                    Hoje
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: var(--cinza-claro);
+                    border-radius: var(--radius-sm);
+                    padding: 18px;
+                    text-align: center;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 28px;
+                      font-weight: 700;
+                      color: var(--verde-escuro);
+                    "
+                    id="statEmbarquesOntem"
+                  >
+                    —
+                  </div>
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--cinza-texto);
+                      margin-top: 4px;
+                    "
+                  >
+                    Ontem
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: var(--cinza-claro);
+                    border-radius: var(--radius-sm);
+                    padding: 18px;
+                    text-align: center;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 28px;
+                      font-weight: 700;
+                      color: var(--verde-escuro);
+                    "
+                    id="statEmbarques7dias"
+                  >
+                    —
+                  </div>
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--cinza-texto);
+                      margin-top: 4px;
+                    "
+                  >
+                    Últimos 7 dias
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: var(--cinza-claro);
+                    border-radius: var(--radius-sm);
+                    padding: 18px;
+                    text-align: center;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 28px;
+                      font-weight: 700;
+                      color: var(--verde-escuro);
+                    "
+                    id="statEmbarques15dias"
+                  >
+                    —
+                  </div>
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--cinza-texto);
+                      margin-top: 4px;
+                    "
+                  >
+                    Últimos 15 dias
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: var(--cinza-claro);
+                    border-radius: var(--radius-sm);
+                    padding: 18px;
+                    text-align: center;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 28px;
+                      font-weight: 700;
+                      color: var(--verde-escuro);
+                    "
+                    id="statEmbarques30dias"
+                  >
+                    —
+                  </div>
+                  <div
+                    style="
+                      font-size: 12px;
+                      color: var(--cinza-texto);
+                      margin-top: 4px;
+                    "
+                  >
+                    Últimos 30 dias
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Embarques reais do dia -->
+            <div class="card" style="margin-top: 20px">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                  margin-bottom: 16px;
+                "
+              >
+                <div
+                  style="
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    font-size: 16px;
+                  "
+                >
+                  <i class="fa-solid fa-id-card-clip"></i> Embarques por Linha
+                </div>
+                <input
+                  type="date"
+                  id="filtroDataEmbarquesReais"
+                  class="input"
+                  style="width: auto; margin-bottom: 0"
+                  onchange="carregarEmbarquesReais()"
+                />
+              </div>
+              <div id="dashboardEmbarquesReais">
+                <p style="color: var(--cinza-texto); font-size: 13px">
+                  Carregando...
+                </p>
+              </div>
+            </div>
+
+            <!-- Ocupação por linha no dashboard -->
+            <div class="card" style="margin-top: 20px">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 16px;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                "
+              >
+                <div
+                  style="
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    font-size: 16px;
+                  "
+                >
+                  <i class="fa-solid fa-bus"></i> Ocupação por Linha
+                </div>
+                <div style="display: flex; gap: 6px">
+                  <button
+                    class="btn-turno-dashboard"
+                    data-turno="a"
+                    onclick="filtrarOcupacaoLinhasDashboard('a')"
+                  >
+                    Turno A + ADM
+                  </button>
+                  <button
+                    class="btn-turno-dashboard"
+                    data-turno="b"
+                    onclick="filtrarOcupacaoLinhasDashboard('b')"
+                  >
+                    Turno B
+                  </button>
+                  <button
+                    class="btn-turno-dashboard"
+                    data-turno="c"
+                    onclick="filtrarOcupacaoLinhasDashboard('c')"
+                  >
+                    Turno C
+                  </button>
+                </div>
+              </div>
+              <div
+                id="dashboardOcupacaoLinhas"
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                  gap: 12px;
+                "
+              >
+                <p style="color: var(--cinza-texto); font-size: 13px">
+                  Carregando...
+                </p>
+              </div>
+            </div>
+
+            <!-- ALERTAS DE RETORNO -->
+            <div class="card" id="cardAlertasRetorno" style="margin-top: 20px">
+              <div
+                style="
+                  font-weight: 700;
+                  color: var(--verde-escuro);
+                  font-size: 16px;
+                  margin-bottom: 16px;
+                "
+              >
+                <i class="fa-solid fa-triangle-exclamation"></i> Possíveis
+                problemas nos próximos 7 dias
+              </div>
+              <div id="listaAlertasRetorno">
+                <p style="color: var(--cinza-texto); font-size: 13px">
+                  Carregando...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TELA FIM DE SEMANA — substitui a tela id="tela-fds" no app.html -->
+          <div class="tela" id="tela-fds">
+            <div class="card" style="max-width: 100%; margin-bottom: 20px">
+              <p
+                style="
+                  font-size: 13px;
+                  color: var(--cinza-texto);
+                  margin-bottom: 16px;
+                "
+              >
+                O CSV deve conter as colunas: <strong>data</strong> (DD/MM/AAAA)
+                e <strong>matricula</strong>. O turno é identificado
+                automaticamente pela jornada cadastrada. Separador ponto e
+                vírgula.
+              </p>
+
+              <div
+                class="upload-area"
+                onclick="document.getElementById('csvFds').click()"
+              >
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>Clique para selecionar o arquivo CSV</p>
+                <p style="font-size: 12px; margin-top: 4px" id="nomeArquivoFds">
+                  Nenhum arquivo selecionado
+                </p>
+              </div>
+              <input
+                type="file"
+                id="csvFds"
+                accept=".csv"
+                style="display: none"
+                onchange="previewCSVFds()"
+              />
+
+              <div
+                id="fdsPreviewCount"
+                style="
+                  display: none;
+                  font-size: 13px;
+                  color: var(--cinza-texto);
+                  margin-top: 8px;
+                "
+              ></div>
+
+              <div class="status-bar" id="statusFds"></div>
+              <div style="display: flex; gap: 8px; margin-top: 16px">
+                <button
+                  class="btn btn-primary"
+                  onclick="gerarEscalaFds()"
+                  style="width: auto"
+                >
+                  <i class="fa-solid fa-route"></i> Gerar itinerários
+                </button>
+                <button
+                  class="btn btn-outline"
+                  onclick="baixarModeloCSVFds()"
+                  style="width: auto"
+                >
+                  <i class="fa-solid fa-download"></i> Baixar modelo
+                </button>
+              </div>
+            </div>
+
+            <!-- RESULTADO -->
+            <div id="fdsResultado" style="display: none">
+              <div class="card" style="max-width: 100%; margin-bottom: 20px">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 16px;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                  "
+                >
+                  <span
+                    style="
+                      font-size: 15px;
+                      font-weight: 700;
+                      color: var(--verde-escuro);
+                    "
+                    >Itinerários gerados</span
+                  >
+                  <button
+                    id="fdsBtnExportar"
+                    class="btn btn-outline"
+                    onclick="exportarEscalaFdsPDF()"
+                    style="display: none; width: auto"
+                  >
+                    <i class="fa-solid fa-print"></i> Exportar PDF
+                  </button>
+                </div>
+
+                <!-- Adicionar avulso -->
+                <div
+                  style="
+                    background: var(--cinza-claro);
+                    border-radius: var(--radius-sm);
+                    padding: 12px;
+                    margin-bottom: 20px;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: var(--cinza-texto);
+                      margin-bottom: 8px;
+                    "
+                  >
+                    Adicionar colaborador avulso
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      gap: 8px;
+                      align-items: center;
+                      flex-wrap: wrap;
+                    "
+                  >
+                    <input
+                      class="input"
+                      id="fdsMatriculaAvulsa"
+                      placeholder="Matrícula"
+                      style="margin-bottom: 0; max-width: 140px"
+                    />
+                    <select
+                      class="input"
+                      id="fdsDataAvulsa"
+                      style="margin-bottom: 0; flex: 1"
+                    ></select>
+                    <button
+                      class="btn btn-primary"
+                      onclick="adicionarAvulsoFds()"
+                      style="width: auto; white-space: nowrap"
+                    >
+                      <i class="fa-solid fa-plus"></i> Adicionar
+                    </button>
+                  </div>
+                  <div class="status-bar" id="statusFdsAvulso"></div>
+                </div>
+
+                <div id="fdsItinerarios"></div>
+              </div>
+            </div>
+
+            <!-- HISTÓRICO -->
+            <div class="card" style="max-width: 100%">
+              <h3 style="color: var(--verde-escuro); margin-bottom: 16px">
+                Histórico de Escalas
+              </h3>
+              <div id="fdsHistorico">
+                <p style="color: var(--cinza-texto); font-size: 13px">
+                  Carregando...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ MAPA DE OCUPAÇÃO ══════════════════════════════ -->
+          <div class="tela" id="tela-mapaOcupacao">
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                margin-bottom: 16px;
+                flex-wrap: wrap;
+                align-items: center;
+              "
+            >
+              <button
+                class="btn btn-primary"
+                onclick="carregarMapaOcupacao()"
+                style="width: auto"
+              >
+                <i class="fa-solid fa-rotate"></i> Atualizar Mapa
+              </button>
+              <div style="display: flex; gap: 6px">
+                <button
+                  class="btn-turno-mapa"
+                  data-turno="todos"
+                  onclick="filtrarMapaOcupacao('todos')"
+                >
+                  Todos
+                </button>
+                <button
+                  class="btn-turno-mapa"
+                  data-turno="a"
+                  onclick="filtrarMapaOcupacao('a')"
+                >
+                  Turno A + ADM
+                </button>
+                <button
+                  class="btn-turno-mapa"
+                  data-turno="b"
+                  onclick="filtrarMapaOcupacao('b')"
+                >
+                  Turno B
+                </button>
+                <button
+                  class="btn-turno-mapa"
+                  data-turno="c"
+                  onclick="filtrarMapaOcupacao('c')"
+                >
+                  Turno C
+                </button>
+              </div>
+            </div>
+            <div class="status-bar" id="statusMapaOcupacao"></div>
+            <div
+              id="mapaOcupacaoEl"
+              style="
+                height: 600px;
+                border-radius: var(--radius);
+                box-shadow: var(--sombra);
+              "
+            ></div>
+          </div>
+
+          <!-- ══════════════════════════════ CONFORMIDADE DE EMBARQUE ══════════════════════════════ -->
+          <div class="tela" id="tela-conformidade">
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                margin-bottom: 16px;
+                flex-wrap: wrap;
+                align-items: flex-end;
+              "
+            >
+              <button class="btn-filtro" onclick="filtroRapido('hoje')">
+                Hoje
+              </button>
+              <button class="btn-filtro" onclick="filtroRapido('ontem')">
+                Ontem
+              </button>
+              <button class="btn-filtro" onclick="filtroRapido('7dias')">
+                7 dias
+              </button>
+              <button class="btn-filtro" onclick="filtroRapido('15dias')">
+                15 dias
+              </button>
+              <button class="btn-filtro" onclick="filtroRapido('30dias')">
+                30 dias
+              </button>
+              <div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >De</label
+                >
+                <input
+                  class="input"
+                  id="conformidadeDataInicio"
+                  type="date"
+                  style="margin-top: 4px; width: 150px; margin-bottom: 0"
+                />
+              </div>
+              <div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Até</label
+                >
+                <input
+                  class="input"
+                  id="conformidadeDataFim"
+                  type="date"
+                  style="margin-top: 4px; width: 150px; margin-bottom: 0"
+                />
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 20px">
+              <button
+                class="btn btn-primary"
+                onclick="gerarConformidade()"
+                style="width: auto"
+              >
+                <i class="fa-solid fa-play"></i> Gerar Relatório
+              </button>
+              <button
+                class="btn btn-outline"
+                onclick="exportarConformidadeCSV()"
+                style="width: auto"
+              >
+                <i class="fa-solid fa-download"></i> Exportar CSV
+              </button>
+            </div>
+
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                margin-bottom: 16px;
+                cursor: pointer;
+              "
+            >
+              <input
+                type="checkbox"
+                id="filtroSoDivergentes"
+                onchange="renderTabelaConformidade()"
+              />
+              Mostrar apenas divergentes
+            </label>
+
+            <div class="status-bar" id="statusConformidade"></div>
+            <div class="card">
+              <div class="tabela-wrap" id="tabelaConformidade">
+                <p style="color: var(--cinza-texto); font-size: 14px">
+                  Selecione um período e clique em Gerar Relatório.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ INCLUIR ══════════════════════════════ -->
+          <div class="tela" id="tela-incluir">
+            <div class="tabs">
+              <button class="tab ativa" onclick="abaIncluir('csv', this)">
+                <i class="fa-solid fa-file-csv"></i> Via CSV
+              </button>
+              <button class="tab" onclick="abaIncluir('manual', this)">
+                <i class="fa-solid fa-keyboard"></i> Manual
+              </button>
+            </div>
+
+            <div id="incluir-csv">
+              <div class="card">
+                <p
+                  style="
+                    font-size: 13px;
+                    color: var(--cinza-texto);
+                    margin-bottom: 16px;
+                  "
+                >
+                  O CSV deve conter as colunas:
+                  <strong
+                    >matricula, nome_colaborador, tipo_de_logradouro,
+                    logradouro, numero, bairro, municipio, estado, jornada,
+                    codigo_centro_de_custo, centro_de_custo, cargo</strong
+                  >. Separador ponto e vírgula.
+                </p>
+                <div
+                  class="upload-area"
+                  onclick="document.getElementById('csvIncluir').click()"
+                >
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <p>Clique para selecionar o arquivo CSV</p>
+                  <p
+                    style="font-size: 12px; margin-top: 4px"
+                    id="nomeArquivoIncluir"
+                  >
+                    Nenhum arquivo selecionado
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  id="csvIncluir"
+                  accept=".csv"
+                  style="display: none"
+                  onchange="previewCSV()"
+                />
+                <div style="margin-top: 16px">
+                  <div class="status-bar" id="statusIncluir"></div>
+                  <div style="display: flex; gap: 8px; margin-top: 8px">
+                    <button
+                      class="btn btn-primary"
+                      onclick="importarCSV()"
+                      id="btnImportar"
+                      disabled
+                      style="width: auto"
+                    >
+                      <i class="fa-solid fa-upload"></i> Importar
+                    </button>
+                    <button
+                      class="btn btn-outline"
+                      onclick="baixarModeloCSV()"
+                      style="width: auto"
+                    >
+                      <i class="fa-solid fa-download"></i> Baixar modelo
+                    </button>
+                  </div>
+                </div>
+                <div id="detalhesImportacao"></div>
+              </div>
+            </div>
+
+            <div id="incluir-manual" style="display: none">
+              <div class="card" style="max-width: 100%">
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Matrícula</label
+                >
+                <input
+                  class="input"
+                  id="m_matricula"
+                  placeholder="Ex: 1234"
+                  style="margin-top: 4px"
+                />
+
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Nome do colaborador</label
+                >
+                <input
+                  class="input"
+                  id="m_nome"
+                  placeholder="Ex: João da Silva"
+                  style="margin-top: 4px"
+                />
+
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Endereço</label
+                >
+                <div
+                  id="autocomplete-incluir"
+                  style="margin-top: 4px; margin-bottom: 12px"
+                ></div>
+
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Jornada</label
+                >
+                <input
+                  class="input"
+                  id="m_jornada"
+                  placeholder="Ex: TURNO ADM - 07:00 - 17:00"
+                  style="margin-top: 4px"
+                />
+
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 12px;
+                  "
+                >
+                  <div>
+                    <label
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: var(--cinza-texto);
+                      "
+                      >Código centro de custo</label
+                    >
+                    <input
+                      class="input"
+                      id="m_codigo_centro_custo"
+                      placeholder="Ex: 100"
+                      style="margin-top: 4px"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: var(--cinza-texto);
+                      "
+                      >Centro de custo</label
+                    >
+                    <input
+                      class="input"
+                      id="m_centro_custo"
+                      placeholder="Ex: PRODUCAO"
+                      style="margin-top: 4px"
+                    />
+                  </div>
+                </div>
+
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Cargo</label
+                >
+                <input
+                  class="input"
+                  id="m_cargo"
+                  placeholder="Ex: OPERADOR"
+                  style="margin-top: 4px"
+                />
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >RFID do crachá
+                  <span style="font-weight: 400">(opcional)</span></label
+                >
+                <input
+                  class="input"
+                  id="m_rfid"
+                  placeholder="Ex: 0012345678"
+                  style="margin-top: 4px"
+                />
+
+                <input type="hidden" id="m_tipo" />
+                <input type="hidden" id="m_logradouro" />
+                <input type="hidden" id="m_numero" />
+                <input type="hidden" id="m_bairro" />
+                <input type="hidden" id="m_cep" />
+                <input type="hidden" id="m_municipio" />
+                <input type="hidden" id="m_estado" />
+
+                <div class="status-bar" id="statusManual"></div>
+                <button class="btn btn-primary" onclick="incluirManual()">
+                  <i class="fa-solid fa-plus"></i> Incluir Colaborador
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ EXCLUIR ══════════════════════════════ -->
+          <div class="tela" id="tela-excluir">
+            <div class="tabs">
+              <button class="tab ativa" onclick="abaExcluir('csv', this)">
+                <i class="fa-solid fa-file-csv"></i> Via CSV
+              </button>
+              <button class="tab" onclick="abaExcluir('manual', this)">
+                <i class="fa-solid fa-keyboard"></i> Por Matrícula
+              </button>
+            </div>
+
+            <div id="excluir-csv">
+              <div class="card">
+                <p
+                  style="
+                    font-size: 13px;
+                    color: var(--cinza-texto);
+                    margin-bottom: 16px;
+                  "
+                >
+                  CSV com coluna <strong>matricula</strong>. Os registros
+                  correspondentes serão removidos.
+                </p>
+                <div
+                  class="upload-area"
+                  onclick="document.getElementById('csvExcluir').click()"
+                >
+                  <i class="fa-solid fa-trash-arrow-up"></i>
+                  <p>Selecionar CSV com matrículas a excluir</p>
+                  <p
+                    style="font-size: 12px; margin-top: 4px"
+                    id="nomeArquivoExcluir"
+                  >
+                    Nenhum arquivo selecionado
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  id="csvExcluir"
+                  accept=".csv"
+                  style="display: none"
+                  onchange="previewCSVExcluir()"
+                />
+                <div style="margin-top: 16px">
+                  <div class="status-bar" id="statusExcluirCSV"></div>
+                  <button
+                    class="btn btn-danger"
+                    onclick="excluirCSV()"
+                    style="margin-top: 8px"
+                    id="btnExcluirCSV"
+                    disabled
+                  >
+                    <i class="fa-solid fa-trash"></i> Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div id="excluir-manual" style="display: none">
+              <div class="card" style="max-width: 100%">
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Matrícula</label
+                >
+                <input
+                  class="input"
+                  id="excluirMatricula"
+                  placeholder="Digite a matrícula"
+                  style="margin-top: 4px"
+                />
+                <div class="status-bar" id="statusExcluirManual"></div>
+                <button class="btn btn-danger" onclick="excluirManual()">
+                  <i class="fa-solid fa-trash"></i> Excluir Colaborador
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ CONSULTAR PONTO ══════════════════════════════ -->
+          <div class="tela" id="tela-consulta">
+            <div class="card" style="margin-bottom: 20px">
+              <div id="autocomplete-container"></div>
+              <button
+                class="btn btn-primary"
+                onclick="consultar()"
+                style="width: 100%; justify-content: center"
+              >
+                <i class="fa-solid fa-magnifying-glass-location"></i> Encontrar
+                ponto mais próximo
+              </button>
+              <div id="resultado" style="margin-top: 16px"></div>
+            </div>
+            <div
+              id="mapa"
+              style="
+                height: 450px;
+                border-radius: var(--radius);
+                display: none;
+                box-shadow: var(--sombra);
+                width: 100%;
+              "
+            ></div>
+          </div>
+
+          <!-- ══════════════════════════════ CADASTRO RFID ══════════════════════════════ -->
+          <div class="tela" id="tela-rfid">
+            <div class="card" style="max-width: 100%">
+              <p
+                style="
+                  font-size: 13px;
+                  color: var(--cinza-texto);
+                  margin-bottom: 16px;
+                "
+              >
+                Encoste o crachá no leitor RFID com o campo abaixo em foco, ou
+                digite manualmente.
+              </p>
+              <label
+                style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: var(--cinza-texto);
+                "
+                >RFID do crachá</label
+              >
+              <input
+                class="input"
+                id="rfidInput"
+                placeholder="Aproxime o crachá do leitor"
+                style="margin-top: 4px"
+                autocomplete="off"
+              />
+
+              <label
+                style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: var(--cinza-texto);
+                "
+                >Matrícula</label
+              >
+              <input
+                class="input"
+                id="rfidMatricula"
+                placeholder="Ex: 7671"
+                style="margin-top: 4px"
+              />
+
+              <div class="status-bar" id="statusRfid"></div>
+              <button class="btn btn-primary" onclick="vincularRfid()">
+                <i class="fa-solid fa-link"></i> Vincular Crachá
+              </button>
+            </div>
+
+            <div class="card" style="max-width: 100%; margin-top: 20px">
+              <div
+                style="
+                  font-weight: 700;
+                  color: var(--verde-escuro);
+                  margin-bottom: 12px;
+                "
+              >
+                Crachás Cadastrados
+              </div>
+              <div class="tabela-wrap" id="listaRfid">
+                <p style="color: var(--cinza-texto); font-size: 13px">
+                  Carregando...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ RELATÓRIO DE PONTOS ══════════════════════════════ -->
+          <div class="tela" id="tela-relatorio">
+            <div
+              style="
+                display: flex;
+                gap: 12px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+              "
+            >
+              <button class="btn btn-primary" onclick="gerarRelatorio()">
+                <i class="fa-solid fa-play"></i> Atualizar Relatório
+              </button>
+              <button class="btn btn-outline" onclick="exportarCSV()">
+                <i class="fa-solid fa-download"></i> Exportar CSV
+              </button>
+            </div>
+            <div
+              id="relatorioGeradoEm"
+              style="
+                font-size: 12px;
+                color: var(--cinza-texto);
+                margin-bottom: 16px;
+              "
+            ></div>
+            <div class="status-bar" id="statusRelatorio"></div>
+            <div class="card">
+              <div class="tabela-wrap" id="tabelaRelatorio">
+                <p style="color: var(--cinza-texto); font-size: 14px">
+                  Clique em "Atualizar Relatório" para carregar os dados.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ OCUPAÇÃO POR PONTO ══════════════════════════════ -->
+          <div class="tela" id="tela-ocupacaoPonto">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+              "
+            >
+              <button class="btn btn-primary" onclick="carregarOcupacaoPonto()">
+                <i class="fa-solid fa-rotate"></i> Atualizar
+              </button>
+              <div style="display: flex; gap: 6px">
+                <button
+                  class="btn-turno"
+                  data-turno="todos"
+                  onclick="renderOcupacaoPonto('todos')"
+                  style="
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    background: var(--verde-escuro);
+                    color: #fff;
+                  "
+                >
+                  Todos
+                </button>
+                <button
+                  class="btn-turno"
+                  data-turno="a"
+                  onclick="renderOcupacaoPonto('a')"
+                  style="
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    background: var(--verde-suave);
+                    color: var(--verde-escuro);
+                  "
+                >
+                  Turno A + ADM
+                </button>
+                <button
+                  class="btn-turno"
+                  data-turno="b"
+                  onclick="renderOcupacaoPonto('b')"
+                  style="
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    background: var(--verde-suave);
+                    color: var(--verde-escuro);
+                  "
+                >
+                  Turno B
+                </button>
+                <button
+                  class="btn-turno"
+                  data-turno="c"
+                  onclick="renderOcupacaoPonto('c')"
+                  style="
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    background: var(--verde-suave);
+                    color: var(--verde-escuro);
+                  "
+                >
+                  Turno C
+                </button>
+              </div>
+            </div>
+            <div class="status-bar" id="statusOcupacaoPonto"></div>
+            <div id="listaOcupacaoPonto"></div>
+          </div>
+
+          <!-- ══════════════════════════════ EDITAR ALOCAÇÃO ══════════════════════════════ -->
+          <div class="tela" id="tela-editar">
+            <div class="card" style="max-width: 100%">
+              <label
+                style="
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: var(--cinza-texto);
+                "
+                >Buscar por matrícula</label
+              >
+              <input
+                class="input"
+                id="editarMatricula"
+                placeholder="Digite a matrícula"
+                style="margin-top: 4px"
+              />
+              <button
+                class="btn btn-primary"
+                onclick="buscarColaboradorEditar()"
+                style="width: auto"
+              >
+                <i class="fa-solid fa-magnifying-glass"></i> Buscar
+              </button>
+
+              <div class="status-bar" id="statusEditar"></div>
+
+              <div id="editarResultado" style="display: none">
+                <div
+                  style="
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    margin-bottom: 16px;
+                  "
+                  id="editarNome"
+                >
+                  —
+                </div>
+
+                <!-- DADOS PESSOAIS -->
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Nome</label
+                >
+                <input
+                  class="input"
+                  id="editarNomeInput"
+                  style="margin-top: 4px"
+                />
+
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Jornada</label
+                >
+                <input
+                  class="input"
+                  id="editarJornada"
+                  style="margin-top: 4px"
+                />
+
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 12px;
+                  "
+                >
+                  <div>
+                    <label
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: var(--cinza-texto);
+                      "
+                      >Código centro de custo</label
+                    >
+                    <input
+                      class="input"
+                      id="editarCodigoCentroCusto"
+                      style="margin-top: 4px"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: var(--cinza-texto);
+                      "
+                      >Centro de custo</label
+                    >
+                    <input
+                      class="input"
+                      id="editarCentroCusto"
+                      style="margin-top: 4px"
+                    />
+                  </div>
+                </div>
+
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Cargo</label
+                >
+                <input class="input" id="editarCargo" style="margin-top: 4px" />
+
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >RFID do crachá</label
+                >
+                <input
+                  class="input"
+                  id="editarRfid"
+                  style="margin-top: 4px"
+                  placeholder="Deixe vazio para remover o vínculo"
+                />
+
+                <!-- ENDEREÇO -->
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    margin: 16px 0 8px;
+                  "
+                >
+                  Endereço
+                </div>
+                <div
+                  style="
+                    font-size: 12px;
+                    color: var(--cinza-texto);
+                    margin-bottom: 8px;
+                  "
+                  id="editarEndereco"
+                >
+                  —
+                </div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Novo endereço (opcional)</label
+                >
+                <div
+                  id="autocomplete-editar"
+                  style="margin-top: 4px; margin-bottom: 4px"
+                ></div>
+                <input
+                  class="input"
+                  id="editarNovoEndereco"
+                  placeholder="Endereço selecionado aparece aqui"
+                  readonly
+                  style="background: var(--cinza-claro)"
+                />
+                <input type="hidden" id="editarNovoLat" />
+                <input type="hidden" id="editarNovoLon" />
+                <input type="hidden" id="editarNovoTipo" />
+                <input type="hidden" id="editarNovoLogradouro" />
+                <input type="hidden" id="editarNovoNumero" />
+                <input type="hidden" id="editarNovoBairro" />
+                <input type="hidden" id="editarNovoMunicipio" />
+                <input type="hidden" id="editarNovoEstado" />
+                <div
+                  style="
+                    font-size: 12px;
+                    color: var(--cinza-texto);
+                    margin-bottom: 8px;
+                  "
+                  id="editarEndereco"
+                >
+                  —
+                </div>
+                <div
+                  id="autocomplete-editar"
+                  style="margin-top: 4px; margin-bottom: 4px"
+                ></div>
+                <input type="hidden" id="editarNovoLat" />
+                <input type="hidden" id="editarNovoLon" />
+                <input type="hidden" id="editarNovoTipo" />
+                <input type="hidden" id="editarNovoLogradouro" />
+                <input type="hidden" id="editarNovoNumero" />
+                <input type="hidden" id="editarNovoBairro" />
+                <input type="hidden" id="editarNovoMunicipio" />
+                <input type="hidden" id="editarNovoEstado" />
+                <!-- <input
+                  class="input"
+                  id="editarNovoEndereco"
+                  placeholder="Endereço selecionado aparece aqui"
+                  readonly
+                  style="background: var(--cinza-claro)"
+                /> -->
+                <div
+                  id="editarSugestaoPonto"
+                  style="
+                    display: none;
+                    background: var(--verde-suave);
+                    border-radius: var(--radius-sm);
+                    padding: 10px;
+                    font-size: 13px;
+                    margin-bottom: 12px;
+                  "
+                ></div>
+
+                <!-- ALOCAÇÃO -->
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    margin: 16px 0 8px;
+                  "
+                >
+                  Alocação
+                </div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Ponto fixo</label
+                >
+                <select
+                  class="input"
+                  id="editarPontoSelect"
+                  style="margin-top: 4px"
+                ></select>
+
+                <!-- STATUS -->
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    margin: 16px 0 8px;
+                  "
+                >
+                  Status
+                </div>
+                <select
+                  class="input"
+                  id="editarStatus"
+                  style="margin-top: 4px"
+                  onchange="toggleDatasEditar()"
+                >
+                  <option value="ativo">Ativo</option>
+                  <option value="ferias">Férias</option>
+                  <option value="afastado">Afastado</option>
+                  <option value="desligado">Desligado</option>
+                </select>
+                <div id="editarDatas" style="display: none; margin-top: 12px">
+                  <div
+                    style="
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 12px;
+                    "
+                  >
+                    <div>
+                      <label
+                        style="
+                          font-size: 12px;
+                          font-weight: 600;
+                          color: var(--cinza-texto);
+                        "
+                        >Data saída</label
+                      >
+                      <input
+                        class="input"
+                        id="editarStatusInicio"
+                        placeholder="DD/MM/AAAA"
+                        style="margin-top: 4px"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style="
+                          font-size: 12px;
+                          font-weight: 600;
+                          color: var(--cinza-texto);
+                        "
+                        >Data retorno</label
+                      >
+                      <input
+                        class="input"
+                        id="editarStatusFim"
+                        placeholder="DD/MM/AAAA"
+                        style="margin-top: 4px"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="status-bar" id="statusEditarSalvar"></div>
+                <button
+                  class="btn btn-primary"
+                  onclick="salvarEdicaoPonto()"
+                  style="margin-top: 16px; width: 100%"
+                >
+                  <i class="fa-solid fa-floppy-disk"></i> Salvar alterações
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ STATUS / FÉRIAS ══════════════════════════════ -->
+          <div class="tela" id="tela-status">
+            <div class="tabs">
+              <button class="tab ativa" onclick="abaStatus('csv', this)">
+                <i class="fa-solid fa-file-csv"></i> Via CSV
+              </button>
+              <button class="tab" onclick="abaStatus('manual', this)">
+                <i class="fa-solid fa-keyboard"></i> Manual
+              </button>
+            </div>
+
+            <div id="status-manual" style="display: none">
+              <div class="card" style="max-width: 500px">
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Buscar por matrícula</label
+                >
+                <input
+                  class="input"
+                  id="statusMatricula"
+                  placeholder="Digite a matrícula"
+                  style="margin-top: 4px"
+                />
+                <button
+                  class="btn btn-primary"
+                  onclick="buscarColaboradorStatus()"
+                  style="width: auto"
+                >
+                  <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                </button>
+
+                <div class="status-bar" id="statusBuscaStatus"></div>
+
+                <div
+                  id="statusResultado"
+                  style="display: none; margin-top: 20px"
+                >
+                  <div
+                    style="
+                      background: var(--verde-suave);
+                      border-radius: var(--radius-sm);
+                      padding: 14px;
+                      margin-bottom: 16px;
+                    "
+                  >
+                    <div
+                      style="font-weight: 700; color: var(--verde-escuro)"
+                      id="statusNome"
+                    >
+                      —
+                    </div>
+                  </div>
+
+                  <label
+                    style="
+                      font-size: 12px;
+                      font-weight: 600;
+                      color: var(--cinza-texto);
+                    "
+                    >Status</label
+                  >
+                  <select
+                    class="input"
+                    id="statusSelect"
+                    style="margin-top: 4px"
+                    onchange="toggleDatasStatus()"
+                  >
+                    <option value="ferias">Férias</option>
+                    <option value="afastado">Afastamento</option>
+                    <option value="ativo">
+                      Voltar para Ativo (encerrar manualmente)
+                    </option>
+                  </select>
+
+                  <div id="statusDatas" style="display: none">
+                    <label
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: var(--cinza-texto);
+                      "
+                      >Início</label
+                    >
+                    <input
+                      class="input"
+                      id="statusInicio"
+                      type="text"
+                      placeholder="DD/MM/AAAA"
+                      style="margin-top: 4px"
+                    />
+                    <label
+                      style="
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: var(--cinza-texto);
+                      "
+                      >Fim</label
+                    >
+                    <input
+                      class="input"
+                      id="statusFim"
+                      type="text"
+                      placeholder="DD/MM/AAAA"
+                      style="margin-top: 4px"
+                    />
+                  </div>
+
+                  <div class="status-bar" id="statusSalvarStatus"></div>
+                  <button class="btn btn-primary" onclick="salvarStatus()">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Status
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div id="status-csv">
+              <div class="card">
+                <p
+                  style="
+                    font-size: 13px;
+                    color: var(--cinza-texto);
+                    margin-bottom: 16px;
+                  "
+                >
+                  O CSV deve conter as colunas:
+                  <strong>matricula, motivo, data_saida, data_retorno</strong>.
+                  Motivo aceito: <code>ferias</code> ou
+                  <code>afastamento</code>. Datas no formato
+                  <code>DD/MM/AAAA</code>. Separador ponto e vírgula.
+                </p>
+                <div
+                  class="upload-area"
+                  onclick="document.getElementById('csvStatus').click()"
+                >
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <p>Clique para selecionar o arquivo CSV</p>
+                  <p
+                    style="font-size: 12px; margin-top: 4px"
+                    id="nomeArquivoStatus"
+                  >
+                    Nenhum arquivo selecionado
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  id="csvStatus"
+                  accept=".csv"
+                  style="display: none"
+                  onchange="previewCSVStatus()"
+                />
+                <div
+                  style="
+                    margin-top: 16px;
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <div
+                    class="status-bar"
+                    id="statusImportarStatus"
+                    style="width: 100%"
+                  ></div>
+                  <button
+                    class="btn btn-primary"
+                    onclick="importarCSVStatus()"
+                    id="btnImportarStatus"
+                    disabled
+                    style="width: auto"
+                  >
+                    <i class="fa-solid fa-upload"></i> Importar
+                  </button>
+                  <button
+                    class="btn btn-outline"
+                    onclick="baixarModeloStatusCSV()"
+                    style="width: auto"
+                  >
+                    <i class="fa-solid fa-download"></i> Baixar modelo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Variação de headcount -->
+            <div class="card" style="margin-top: 20px">
+              <div
+                style="
+                  font-weight: 700;
+                  color: var(--verde-escuro);
+                  margin-bottom: 12px;
+                "
+              >
+                Variação de headcount por turno
+              </div>
+              <div id="cardNetFerias">
+                <p style="color: var(--cinza-texto); font-size: 13px">
+                  Carregando...
+                </p>
+              </div>
+            </div>
+
+            <!-- Card: Lista de férias/afastados -->
+            <div class="card" style="margin-top: 20px">
+              <div
+                style="
+                  font-weight: 700;
+                  color: var(--verde-escuro);
+                  margin-bottom: 12px;
+                "
+              >
+                Colaboradores de férias ou afastados
+              </div>
+              <input type="hidden" id="filtroFaseStatus" value="todos" />
+              <div class="tabela-wrap" id="listaStatus">
+                <p style="color: var(--cinza-texto); font-size: 13px">
+                  Carregando...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════ GESTÃO DE ROTAS ══════════════════════════════ -->
+          <div class="tela" id="tela-rotas">
+            <div
+              style="
+                display: flex;
+                gap: 12px;
+                align-items: flex-end;
+                flex-wrap: wrap;
+                margin-bottom: 20px;
+              "
+            >
+              <div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Linha</label
+                >
+                <select
+                  class="input"
+                  id="rotasLinha"
+                  style="margin-top: 4px; width: 200px"
+                  onchange="carregarRota()"
+                >
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Chegada</label
+                >
+                <input
+                  class="input"
+                  id="rotasChegada"
+                  type="time"
+                  value="06:40"
+                  style="margin-top: 4px; width: 120px"
+                />
+              </div>
+              <div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Vel. média (km/h)</label
+                >
+                <input
+                  class="input"
+                  id="rotasVelocidade"
+                  type="number"
+                  value="30"
+                  style="margin-top: 4px; width: 120px"
+                />
+              </div>
+              <button
+                class="btn btn-primary"
+                onclick="salvarRota()"
+                style="width: auto"
+              >
+                <i class="fa-solid fa-floppy-disk"></i> Salvar e Recalcular
+              </button>
+              <button
+                class="btn btn-outline"
+                onclick="exportarRotaPDF()"
+                style="width: auto"
+              >
+                <i class="fa-solid fa-file-pdf"></i> PDF
+              </button>
+              <button
+                class="btn btn-outline"
+                onclick="exportarRotaExcel()"
+                style="width: auto"
+              >
+                <i class="fa-solid fa-file-excel"></i> Excel
+              </button>
+            </div>
+
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                align-items: start;
+              "
+            >
+              <div class="card">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 16px;
+                  "
+                >
+                  <div style="font-weight: 700; color: var(--verde-escuro)">
+                    Pontos da Rota
+                  </div>
+                  <button
+                    class="btn btn-primary"
+                    onclick="abrirModalPonto()"
+                    style="padding: 8px 14px; font-size: 13px; width: auto"
+                  >
+                    <i class="fa-solid fa-plus"></i> Novo Ponto
+                  </button>
+                </div>
+                <div class="status-bar" id="statusRotas"></div>
+                <div id="listaRotaPontos"></div>
+              </div>
+
+              <div class="card">
+                <div
+                  style="
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    margin-bottom: 16px;
+                  "
+                >
+                  Itinerário Calculado
+                </div>
+                <div id="previewItinerario">
+                  <p style="color: var(--cinza-texto); font-size: 13px">
+                    Selecione uma linha para visualizar.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 16px;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                "
+              >
+                <div
+                  style="
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    font-size: 16px;
+                  "
+                >
+                  <i class="fa-solid fa-map-location-dot"></i> Mapa da Rota
+                </div>
+                <div style="display: flex; gap: 6px">
+                  <button
+                    class="btn-turno-rota"
+                    data-turno="todos"
+                    onclick="filtrarMapaRota('todos')"
+                  >
+                    Todos
+                  </button>
+                  <button
+                    class="btn-turno-rota"
+                    data-turno="a"
+                    onclick="filtrarMapaRota('a')"
+                  >
+                    Turno A + ADM
+                  </button>
+                  <button
+                    class="btn-turno-rota"
+                    data-turno="b"
+                    onclick="filtrarMapaRota('b')"
+                  >
+                    Turno B
+                  </button>
+                  <button
+                    class="btn-turno-rota"
+                    data-turno="c"
+                    onclick="filtrarMapaRota('c')"
+                  >
+                    Turno C
+                  </button>
+                </div>
+              </div>
+              <div
+                id="mapaRotaEl"
+                style="height: 500px; border-radius: var(--radius)"
+              ></div>
+            </div>
+
+            <!-- Modal cadastro de ponto -->
+            <div
+              id="modalNovoPonto"
+              style="
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <div
+                style="
+                  background: var(--branco);
+                  border-radius: var(--radius);
+                  padding: 28px;
+                  max-width: 480px;
+                  width: 90%;
+                  max-height: 90vh;
+                  overflow-y: auto;
+                "
+              >
+                <div
+                  style="
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: var(--verde-escuro);
+                    margin-bottom: 20px;
+                  "
+                >
+                  <i class="fa-solid fa-map-pin"></i> Novo Ponto de Embarque
+                </div>
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Nome do ponto</label
+                >
+                <input
+                  class="input"
+                  id="novoPontoNome"
+                  placeholder="Ex: PADARIA DO JOAO"
+                  style="margin-top: 4px"
+                />
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Endereço</label
+                >
+                <div
+                  id="autocomplete-novoponto"
+                  style="margin-top: 4px; margin-bottom: 12px"
+                ></div>
+                <input type="hidden" id="novoPontoEndereco" />
+                <input type="hidden" id="novoPontoLat" />
+                <input type="hidden" id="novoPontoLon" />
+                <label
+                  style="
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--cinza-texto);
+                  "
+                  >Inserir na posição</label
+                >
+                <select
+                  class="input"
+                  id="novoPontoPosicao"
+                  style="margin-top: 4px"
+                ></select>
+                <div class="status-bar" id="statusNovoPonto"></div>
+                <div style="display: flex; gap: 12px; margin-top: 8px">
+                  <button class="btn btn-primary" onclick="salvarNovoPonto()">
+                    <i class="fa-solid fa-plus"></i> Adicionar
+                  </button>
+                  <button class="btn btn-outline" onclick="fecharModalPonto()">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- fecha page-content -->
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALM5rawvM2XcLTIgwGgqhee3j0XNo2wCE&libraries=places&language=pt-BR&callback=initAutocomplete"
+      async
+      defer
+    ></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
