@@ -224,6 +224,12 @@
       let contadorEmbarques = 0;
       const historico = [];
 
+      // ─── MATRÍCULAS COM ENDEREÇO DESATUALIZADO (atualizar manualmente quando souber de algum caso) ──
+      const MATRICULAS_ENDERECO_DESATUALIZADO = new Set([
+        8122, 7826, 7956, 7928, 8126, 8145, 7685, 8130, 7861, 7806, 7328, 7835,
+        7719, 7202, 8016, 7942, 7925, 8132,
+      ]);
+
       // ─── HISTÓRICO LOCAL PARA BLOQUEIO OFFLINE ────────────────────────────────────
       const CHAVE_HISTORICO_LOCAL = "historico_leituras_local";
 
@@ -567,15 +573,29 @@
 
         contadorEmbarques++;
         document.getElementById("contador").textContent = contadorEmbarques;
-        beep(true);
         salvarHistoricoLocal(matricula, linhaAtual, agora.getTime());
 
         const horaStr = agora.toLocaleTimeString("pt-BR", {
           hour: "2-digit",
           minute: "2-digit",
         });
-        mostrarResultado(`✅ ${matricula} — ${horaStr}`, "ok");
-        adicionarHistorico(matricula, horaStr);
+
+        const enderecoDesatualizado =
+          MATRICULAS_ENDERECO_DESATUALIZADO.has(matricula);
+
+        if (enderecoDesatualizado) {
+          beep(true);
+          setTimeout(() => beep(true), 200); // bipe duplo para chamar atenção
+          mostrarResultado(
+            `✅ ${matricula} — ${horaStr}<br><span style="font-size:14px;color:#b7950b;">⚠️ Endereço desatualizado — avisar Gestão de Frotas</span>`,
+            "aviso",
+          );
+        } else {
+          beep(true);
+          mostrarResultado(`✅ ${matricula} — ${horaStr}`, "ok");
+        }
+
+        adicionarHistorico(matricula, horaStr, enderecoDesatualizado);
 
         console.timeEnd("leitura-total");
 
@@ -616,16 +636,16 @@
         }
       }
 
-      function adicionarHistorico(matricula, hora) {
-        historico.unshift({ matricula, hora });
+      function adicionarHistorico(matricula, hora, alerta = false) {
+        historico.unshift({ matricula, hora, alerta });
         document.getElementById("historico").innerHTML = historico
           .slice(0, 20)
           .map(
             (h) => `
-        <div class="historico-item">
-          <span class="mat">${h.matricula}</span>
-          <span class="hora">${h.hora}</span>
-        </div>`,
+    <div class="historico-item">
+      <span class="mat">${h.matricula}${h.alerta ? ' <span style="color:#b7950b;">⚠️</span>' : ""}</span>
+      <span class="hora">${h.hora}</span>
+    </div>`,
           )
           .join("");
       }
