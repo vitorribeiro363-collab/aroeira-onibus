@@ -1,7 +1,7 @@
 {
   "name": "Leitor de Embarque",
   "short_name": "Embarque",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0f2d1c",
   "theme_color": "#0f2d1c",
