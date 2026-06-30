@@ -217,8 +217,8 @@
 
       // ─── MATRÍCULAS COM ENDEREÇO DESATUALIZADO (atualizar manualmente quando souber de algum caso) ──
       const MATRICULAS_ENDERECO_DESATUALIZADO = new Set([
-        8122, 7826, 7956, 7928, 8126, 8145, 7685, 8130, 7861, 7806, 7328, 7835,
-        7719, 7202, 8016, 7942, 7925, 8132,
+        8020, 8122, 7826, 7956, 7928, 8126, 8145, 7685, 8130, 7861, 7806, 7328,
+        7835, 7719, 7202, 8016, 7942, 7925, 8132,
       ]);
 
       // ─── HISTÓRICO LOCAL PARA BLOQUEIO OFFLINE ────────────────────────────────────
@@ -578,7 +578,7 @@
           beep(true);
           setTimeout(() => beep(true), 200); // bipe duplo para chamar atenção
           mostrarResultado(
-            `✅ ${matricula} — ${horaStr}<br><span style="font-size:14px;color:#b7950b;">⚠️ Endereço desatualizado — avisar Gestão de Frotas</span>`,
+            `✅ ${matricula} — ${horaStr}<br><span style="font-size:14px;color:#b7950b;">⚠️ Endereço desatualizado — entrar em contato com Gestão de Frotas</span>`,
             "aviso",
           );
         } else {
