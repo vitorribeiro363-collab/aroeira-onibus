@@ -798,6 +798,9 @@ async function buscarColaboradorEditar() {
   document.getElementById("editarNovoLon").value = "";
   document.getElementById("editarNovoEndereco").value = "";
   document.getElementById("editarSugestaoPonto").style.display = "none";
+  if (window.pacEditar) {
+    window.pacEditar.value = "";
+  }
 
   const { data: func, error } = await db
     .from("funcionarios")
@@ -1649,13 +1652,13 @@ window.initAutocomplete = async function () {
   if (containerEditar) {
     const { PlaceAutocompleteElement } =
       await google.maps.importLibrary("places");
-    const pacEditar = new PlaceAutocompleteElement({
+    window.pacEditar = new PlaceAutocompleteElement({
       componentRestrictions: { country: "br" },
     });
-    pacEditar.style.width = "100%";
-    containerEditar.appendChild(pacEditar);
+    window.pacEditar.style.width = "100%";
+    containerEditar.appendChild(window.pacEditar);
 
-    pacEditar.addEventListener("gmp-select", async (e) => {
+    window.pacEditar.addEventListener("gmp-select", async (e) => {
       const place = e.placePrediction.toPlace();
       // ← CORRIGIDO: inclui addressComponents no fetchFields
       await place.fetchFields({
