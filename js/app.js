@@ -1004,10 +1004,19 @@ function aplicarMascaraData(input) {
 
 async function atualizarStatusVencidos() {
   const hoje = new Date().toISOString().split("T")[0];
+
+  // Férias/afastamentos que já terminaram → volta pra ativo
   await db
     .from("funcionarios")
     .update({ status: "ativo" }) // ← não limpa status_inicio e status_fim
     .lt("status_fim", hoje)
+    .in("status", ["ferias", "afastado"]);
+
+  // Férias/afastamentos que ainda não começaram → volta pra ativo
+  await db
+    .from("funcionarios")
+    .update({ status: "ativo" })
+    .gt("status_inicio", hoje)
     .in("status", ["ferias", "afastado"]);
 }
 
