@@ -1329,13 +1329,15 @@
                   font-weight: 600;
                   color: var(--cinza-texto);
                 "
-                >Buscar por matrícula ou nome</label
               >
+                Buscar por matrícula ou nome
+              </label>
               <div
                 style="
                   display: flex;
                   gap: 8px;
                   margin-top: 4px;
+                  align-items: center;
                   flex-wrap: wrap;
                 "
               >
@@ -1343,9 +1345,9 @@
                   class="input"
                   id="editarMatricula"
                   placeholder="Matrícula"
-                  style="max-width: 160px"
+                  style="width: 130px; flex-shrink: 0"
                 />
-                <div style="position: relative; flex: 1; min-width: 200px">
+                <div style="position: relative; flex: 1; min-width: 180px">
                   <input
                     class="input"
                     id="editarBuscaNome"
@@ -1375,7 +1377,7 @@
                 <button
                   class="btn btn-primary"
                   onclick="buscarColaboradorEditar()"
-                  style="width: auto"
+                  style="width: auto; flex-shrink: 0; white-space: nowrap"
                 >
                   <i class="fa-solid fa-magnifying-glass"></i> Buscar
                 </button>
