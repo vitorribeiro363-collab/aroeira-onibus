@@ -844,9 +844,7 @@ async function buscarColaboradorEditar() {
   document.getElementById("editarNovoLon").value = "";
   document.getElementById("editarNovoEndereco").value = "";
   document.getElementById("editarSugestaoPonto").style.display = "none";
-  if (window.pacEditar) {
-    window.pacEditar.value = "";
-  }
+  await iniciarPacEditar();
 
   const { data: func, error } = await db
     .from("funcionarios")
@@ -913,6 +911,77 @@ async function buscarColaboradorEditar() {
   });
 
   document.getElementById("editarResultado").style.display = "block";
+}
+
+async function iniciarPacEditar() {
+  const container = document.getElementById("autocomplete-editar");
+  if (!container) return;
+
+  // Destrói o widget anterior se existir
+  if (window.pacEditar) {
+    window.pacEditar.remove();
+    window.pacEditar = null;
+  }
+
+  const { PlaceAutocompleteElement } =
+    await google.maps.importLibrary("places");
+  window.pacEditar = new PlaceAutocompleteElement({
+    componentRestrictions: { country: "br" },
+  });
+  window.pacEditar.style.width = "100%";
+  container.appendChild(window.pacEditar);
+
+  window.pacEditar.addEventListener("gmp-select", async (e) => {
+    const place = e.placePrediction.toPlace();
+    await place.fetchFields({
+      fields: ["addressComponents", "formattedAddress", "location"],
+    });
+
+    const lat = place.location.lat();
+    const lon = place.location.lng();
+
+    document.getElementById("editarNovoLat").value = lat;
+    document.getElementById("editarNovoLon").value = lon;
+    document.getElementById("editarNovoEndereco").value =
+      place.formattedAddress ?? "";
+
+    const comps = place.addressComponents;
+    const get = (tipos) =>
+      comps?.find((c) => tipos.some((t) => c.types.includes(t)))?.longText ??
+      "";
+
+    const rua = get(["route"]);
+    const partes = rua.split(" ");
+    document.getElementById("editarNovoTipo").value =
+      partes[0]?.toUpperCase() ?? "";
+    document.getElementById("editarNovoLogradouro").value = partes
+      .slice(1)
+      .join(" ");
+    document.getElementById("editarNovoNumero").value = get(["street_number"]);
+    document.getElementById("editarNovoBairro").value = get([
+      "sublocality_level_1",
+      "sublocality",
+      "neighborhood",
+    ]);
+    document.getElementById("editarNovoMunicipio").value = get([
+      "locality",
+      "administrative_area_level_2",
+    ]);
+    document.getElementById("editarNovoEstado").value = get([
+      "administrative_area_level_1",
+    ]);
+
+    const { data: pontos } = await db.from("pontos").select("*");
+    const sugestao = encontrarMelhorPontoBalanceado(lat, lon, pontos, {});
+
+    if (sugestao?.ponto) {
+      const sel = document.getElementById("editarPontoSelect");
+      sel.value = `${sugestao.ponto.nome}|${sugestao.ponto.linha}`;
+      document.getElementById("editarSugestaoPonto").style.display = "block";
+      document.getElementById("editarSugestaoPonto").innerHTML =
+        `📍 Sugestão automática: <strong>${sugestao.ponto.nome}</strong> — Linha ${sugestao.ponto.linha} (${(sugestao.distancia * 1000).toFixed(0)}m)`;
+    }
+  });
 }
 
 async function salvarEdicaoPonto() {
@@ -1714,71 +1783,71 @@ window.initAutocomplete = async function () {
   }
 
   // ── EDITAR ──
-  const containerEditar = document.getElementById("autocomplete-editar");
-  if (containerEditar) {
-    const { PlaceAutocompleteElement } =
-      await google.maps.importLibrary("places");
-    window.pacEditar = new PlaceAutocompleteElement({
-      componentRestrictions: { country: "br" },
-    });
-    window.pacEditar.style.width = "100%";
-    containerEditar.appendChild(window.pacEditar);
+  // const containerEditar = document.getElementById("autocomplete-editar");
+  // if (containerEditar) {
+  //   const { PlaceAutocompleteElement } =
+  //     await google.maps.importLibrary("places");
+  //   window.pacEditar = new PlaceAutocompleteElement({
+  //     componentRestrictions: { country: "br" },
+  //   });
+  //   window.pacEditar.style.width = "100%";
+  //   containerEditar.appendChild(window.pacEditar);
 
-    window.pacEditar.addEventListener("gmp-select", async (e) => {
-      const place = e.placePrediction.toPlace();
-      // ← CORRIGIDO: inclui addressComponents no fetchFields
-      await place.fetchFields({
-        fields: ["addressComponents", "formattedAddress", "location"],
-      });
+  //   window.pacEditar.addEventListener("gmp-select", async (e) => {
+  //     const place = e.placePrediction.toPlace();
+  //     // ← CORRIGIDO: inclui addressComponents no fetchFields
+  //     await place.fetchFields({
+  //       fields: ["addressComponents", "formattedAddress", "location"],
+  //     });
 
-      const lat = place.location.lat();
-      const lon = place.location.lng();
+  //     const lat = place.location.lat();
+  //     const lon = place.location.lng();
 
-      document.getElementById("editarNovoLat").value = lat;
-      document.getElementById("editarNovoLon").value = lon;
-      document.getElementById("editarNovoEndereco").value =
-        place.formattedAddress ?? "";
+  //     document.getElementById("editarNovoLat").value = lat;
+  //     document.getElementById("editarNovoLon").value = lon;
+  //     document.getElementById("editarNovoEndereco").value =
+  //       place.formattedAddress ?? "";
 
-      const comps = place.addressComponents;
-      const get = (tipos) =>
-        comps?.find((c) => tipos.some((t) => c.types.includes(t)))?.longText ??
-        "";
+  //     const comps = place.addressComponents;
+  //     const get = (tipos) =>
+  //       comps?.find((c) => tipos.some((t) => c.types.includes(t)))?.longText ??
+  //       "";
 
-      const rua = get(["route"]);
-      const partes = rua.split(" ");
-      document.getElementById("editarNovoTipo").value =
-        partes[0]?.toUpperCase() ?? "";
-      document.getElementById("editarNovoLogradouro").value = partes
-        .slice(1)
-        .join(" ");
-      document.getElementById("editarNovoNumero").value = get([
-        "street_number",
-      ]);
-      document.getElementById("editarNovoBairro").value = get([
-        "sublocality_level_1",
-        "sublocality",
-        "neighborhood",
-      ]);
-      document.getElementById("editarNovoMunicipio").value = get([
-        "locality",
-        "administrative_area_level_2",
-      ]);
-      document.getElementById("editarNovoEstado").value = get([
-        "administrative_area_level_1",
-      ]);
+  //     const rua = get(["route"]);
+  //     const partes = rua.split(" ");
+  //     document.getElementById("editarNovoTipo").value =
+  //       partes[0]?.toUpperCase() ?? "";
+  //     document.getElementById("editarNovoLogradouro").value = partes
+  //       .slice(1)
+  //       .join(" ");
+  //     document.getElementById("editarNovoNumero").value = get([
+  //       "street_number",
+  //     ]);
+  //     document.getElementById("editarNovoBairro").value = get([
+  //       "sublocality_level_1",
+  //       "sublocality",
+  //       "neighborhood",
+  //     ]);
+  //     document.getElementById("editarNovoMunicipio").value = get([
+  //       "locality",
+  //       "administrative_area_level_2",
+  //     ]);
+  //     document.getElementById("editarNovoEstado").value = get([
+  //       "administrative_area_level_1",
+  //     ]);
 
-      const { data: pontos } = await db.from("pontos").select("*");
-      const sugestao = encontrarMelhorPontoBalanceado(lat, lon, pontos, {});
+  //     const { data: pontos } = await db.from("pontos").select("*");
+  //     const sugestao = encontrarMelhorPontoBalanceado(lat, lon, pontos, {});
 
-      if (sugestao?.ponto) {
-        const sel = document.getElementById("editarPontoSelect");
-        sel.value = `${sugestao.ponto.nome}|${sugestao.ponto.linha}`;
-        document.getElementById("editarSugestaoPonto").style.display = "block";
-        document.getElementById("editarSugestaoPonto").innerHTML =
-          `📍 Sugestão automática: <strong>${sugestao.ponto.nome}</strong> — Linha ${sugestao.ponto.linha} (${(sugestao.distancia * 1000).toFixed(0)}m)`;
-      }
-    });
-  }
+  //     if (sugestao?.ponto) {
+  //       const sel = document.getElementById("editarPontoSelect");
+  //       sel.value = `${sugestao.ponto.nome}|${sugestao.ponto.linha}`;
+  //       document.getElementById("editarSugestaoPonto").style.display = "block";
+  //       document.getElementById("editarSugestaoPonto").innerHTML =
+  //         `📍 Sugestão automática: <strong>${sugestao.ponto.nome}</strong> — Linha ${sugestao.ponto.linha} (${(sugestao.distancia * 1000).toFixed(0)}m)`;
+  //     }
+  //   });
+  // }
 
   // ── NOVO PONTO (modal de Gestão de Rotas) ──
   // Inicializado sob demanda em abrirModalPonto()
