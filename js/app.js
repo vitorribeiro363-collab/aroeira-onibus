@@ -787,6 +787,52 @@ async function excluirManual() {
 // ════════════════════════════════════════════════════════════════════════════
 let colaboradorEditarAtual = null;
 
+async function buscarNomeEditar() {
+  const termo = document.getElementById("editarBuscaNome").value.trim();
+  const container = document.getElementById("editarSugestoesNome");
+
+  if (termo.length < 2) {
+    container.style.display = "none";
+    container.innerHTML = "";
+    return;
+  }
+
+  const { data } = await db
+    .from("funcionarios")
+    .select("matricula, nome_colaborador")
+    .ilike("nome_colaborador", `%${termo}%`)
+    .order("nome_colaborador")
+    .limit(10);
+
+  if (!data?.length) {
+    container.style.display = "none";
+    return;
+  }
+
+  container.innerHTML = data
+    .map(
+      (f) => `
+    <div onclick="selecionarNomeEditar(${f.matricula}, '${(f.nome_colaborador ?? "").replace(/'/g, "\\'")}')"
+      style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--cinza-borda);"
+      onmouseover="this.style.background='var(--verde-suave)'"
+      onmouseout="this.style.background='var(--branco)'">
+      <span style="font-weight:600;color:var(--verde-escuro);">${f.matricula}</span>
+      <span style="color:var(--cinza-texto);margin-left:8px;">${f.nome_colaborador ?? "—"}</span>
+    </div>
+  `,
+    )
+    .join("");
+
+  container.style.display = "block";
+}
+
+function selecionarNomeEditar(matricula, nome) {
+  document.getElementById("editarMatricula").value = matricula;
+  document.getElementById("editarBuscaNome").value = nome;
+  document.getElementById("editarSugestoesNome").style.display = "none";
+  buscarColaboradorEditar();
+}
+
 async function buscarColaboradorEditar() {
   const matricula = parseInt(document.getElementById("editarMatricula").value);
   if (!matricula) {
@@ -1466,6 +1512,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // ← ADICIONE AQUI, antes do });
+  document.addEventListener("click", (e) => {
+    if (
+      !e.target.closest("#editarBuscaNome") &&
+      !e.target.closest("#editarSugestoesNome")
+    ) {
+      const container = document.getElementById("editarSugestoesNome");
+      if (container) container.style.display = "none";
+    }
+  });
 });
 
 // ════════════════════════════════════════════════════════════════════════════

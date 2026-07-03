@@ -1329,23 +1329,57 @@
                   font-weight: 600;
                   color: var(--cinza-texto);
                 "
-                >Buscar por matrícula</label
+                >Buscar por matrícula ou nome</label
               >
-              <input
-                class="input"
-                id="editarMatricula"
-                placeholder="Digite a matrícula"
-                style="margin-top: 4px"
-              />
-              <button
-                class="btn btn-primary"
-                onclick="buscarColaboradorEditar()"
-                style="width: auto"
+              <div
+                style="
+                  display: flex;
+                  gap: 8px;
+                  margin-top: 4px;
+                  flex-wrap: wrap;
+                "
               >
-                <i class="fa-solid fa-magnifying-glass"></i> Buscar
-              </button>
-
-              <div class="status-bar" id="statusEditar"></div>
+                <input
+                  class="input"
+                  id="editarMatricula"
+                  placeholder="Matrícula"
+                  style="max-width: 160px"
+                />
+                <div style="position: relative; flex: 1; min-width: 200px">
+                  <input
+                    class="input"
+                    id="editarBuscaNome"
+                    placeholder="Buscar por nome..."
+                    autocomplete="off"
+                    oninput="buscarNomeEditar()"
+                    style="width: 100%"
+                  />
+                  <div
+                    id="editarSugestoesNome"
+                    style="
+                      display: none;
+                      position: absolute;
+                      top: 100%;
+                      left: 0;
+                      right: 0;
+                      z-index: 999;
+                      background: var(--branco);
+                      border: 1px solid var(--cinza-borda);
+                      border-radius: var(--radius-sm);
+                      box-shadow: var(--sombra);
+                      max-height: 220px;
+                      overflow-y: auto;
+                    "
+                  ></div>
+                </div>
+                <button
+                  class="btn btn-primary"
+                  onclick="buscarColaboradorEditar()"
+                  style="width: auto"
+                >
+                  <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                </button>
+              </div>
 
               <div id="editarResultado" style="display: none">
                 <div
