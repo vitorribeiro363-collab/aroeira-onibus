@@ -609,8 +609,19 @@
       }
 
       // ─── INICIALIZAÇÃO ─────────────────────────────────────────────────────────
-      carregarLinhas();
-      precarregarVinculosRfid();
+      async function inicializar() {
+        const btn = document.querySelector(".btn");
+        btn.textContent = "Carregando...";
+        btn.disabled = true;
+
+        await carregarLinhas();
+        await precarregarVinculosRfid();
+
+        btn.textContent = "Iniciar embarques";
+        btn.disabled = false;
+      }
+
+      inicializar();
 
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
