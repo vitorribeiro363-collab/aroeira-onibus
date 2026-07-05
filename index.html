@@ -449,7 +449,13 @@
 
         let matricula = null;
 
-        if (navigator.onLine) {
+        // Tenta o cache local primeiro (muito mais rápido)
+        const cacheVinculos = JSON.parse(
+          localStorage.getItem("cache_vinculos") || "{}",
+        );
+        matricula = cacheVinculos[rfidId];
+
+        if (!matricula && navigator.onLine) {
           try {
             const { data: vinculo, error: errVinculo } = await comTimeout(
               db
@@ -457,6 +463,7 @@
                 .select("matricula")
                 .eq("rfid_id", rfidId)
                 .single(),
+              5000,
             );
 
             if (errVinculo || !vinculo) {
@@ -468,73 +475,35 @@
               console.timeEnd("leitura-total");
               return;
             }
+
             matricula = vinculo.matricula;
-
-            if (jaLeuRecente(matricula, linhaAtual)) {
-              beep(false);
-              mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
-              console.timeEnd("leitura-total");
-              return;
-            }
-
-            const cacheVinculos = JSON.parse(
-              localStorage.getItem("cache_vinculos") || "{}",
-            );
             cacheVinculos[rfidId] = matricula;
             localStorage.setItem(
               "cache_vinculos",
               JSON.stringify(cacheVinculos),
             );
           } catch (e) {
-            // Timeout ou falha de rede mesmo com onLine=true — cai pro cache local
-            console.warn(
-              "Consulta online falhou, tentando cache local:",
-              e.message,
-            );
-            const cacheVinculos = JSON.parse(
-              localStorage.getItem("cache_vinculos") || "{}",
-            );
-            matricula = cacheVinculos[rfidId];
-
-            if (!matricula) {
-              beep(false);
-              mostrarResultado(
-                "⚠️ Conexão instável e crachá não está no cache local.<br>Tente novamente.",
-                "erro",
-              );
-              console.timeEnd("leitura-total");
-              return;
-            }
-
-            if (jaLeuRecente(matricula, linhaAtual)) {
-              beep(false);
-              mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
-              console.timeEnd("leitura-total");
-              return;
-            }
+            console.warn("Consulta online falhou:", e.message);
           }
-        } else {
-          const cacheVinculos = JSON.parse(
-            localStorage.getItem("cache_vinculos") || "{}",
+        }
+
+        if (!matricula) {
+          beep(false);
+          mostrarResultado(
+            navigator.onLine
+              ? "❌ Crachá não cadastrado.<br>Procure a Gestão de Frotas."
+              : "⚠️ Sem internet e crachá não está no cache local.<br>Tente quando houver conexão.",
+            "erro",
           );
-          matricula = cacheVinculos[rfidId];
+          console.timeEnd("leitura-total");
+          return;
+        }
 
-          if (!matricula) {
-            beep(false);
-            mostrarResultado(
-              "⚠️ Sem internet e crachá não está no cache local.<br>Tente quando houver conexão.",
-              "erro",
-            );
-            console.timeEnd("leitura-total");
-            return;
-          }
-
-          if (jaLeuRecente(matricula, linhaAtual)) {
-            beep(false);
-            mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
-            console.timeEnd("leitura-total");
-            return;
-          }
+        if (jaLeuRecente(matricula, linhaAtual)) {
+          beep(false);
+          mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
+          console.timeEnd("leitura-total");
+          return;
         }
 
         // Registra o embarque SEM esperar o GPS
@@ -576,7 +545,7 @@
 
         if (enderecoDesatualizado) {
           beep(true);
-          setTimeout(() => beep(true), 200); // bipe duplo para chamar atenção
+          setTimeout(() => beep(true), 200);
           mostrarResultado(
             `✅ ${matricula} — ${horaStr}<br><span style="font-size:14px;color:#b7950b;">⚠️ Endereço desatualizado — entrar em contato com Gestão de Frotas</span>`,
             "aviso",
@@ -587,10 +556,9 @@
         }
 
         adicionarHistorico(matricula, horaStr, enderecoDesatualizado);
-
         console.timeEnd("leitura-total");
 
-        // Busca GPS em segundo plano e atualiza depois, sem travar a leitura
+        // Busca GPS em segundo plano
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             if (navigator.onLine) {
@@ -613,7 +581,6 @@
           { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 },
         );
       }
-
       function mostrarResultado(msg, tipo) {
         const el = document.getElementById("resultado");
         el.innerHTML = msg;
