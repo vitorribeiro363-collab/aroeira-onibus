@@ -368,6 +368,24 @@
         document.getElementById("telaConfig").style.display = "none";
         document.getElementById("telaLeitor").style.display = "block";
 
+        // ← Atualiza badge agora que a tela está visível
+        const cache = JSON.parse(
+          localStorage.getItem("cache_vinculos") || "{}",
+        );
+        const qtd = Object.keys(cache).length;
+        const badge = document.getElementById("badgeCache");
+        if (badge) {
+          if (qtd > 0) {
+            badge.textContent = `✅ ${qtd} crachás carregados`;
+            badge.style.background = "#e8f5ec";
+            badge.style.color = "#1a4a2e";
+          } else {
+            badge.textContent = "⚠️ Cache não carregado — verifique a conexão";
+            badge.style.background = "#fdecea";
+            badge.style.color = "#c0392b";
+          }
+        }
+
         const input = document.getElementById("inputLeitor");
         input.focus();
         document.addEventListener("click", () => input.focus());
