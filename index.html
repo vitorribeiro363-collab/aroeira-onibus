@@ -308,25 +308,28 @@
         if (!navigator.onLine) return;
 
         try {
-          const { data } = await comTimeout(
+          const { data, error } = await comTimeout(
             db
               .from("funcionarios")
               .select("rfid_id, matricula")
-              .not("rfid_id", "is", null),
+              .not("rfid_id", "is", null)
+              .limit(2000),
           );
+
+          if (error) {
+            console.warn("Erro ao pré-carregar vínculos:", error.message);
+            return;
+          }
           if (!data) return;
 
           const cache = {};
           data.forEach((v) => (cache[v.rfid_id] = v.matricula));
           localStorage.setItem("cache_vinculos", JSON.stringify(cache));
-          console.log("Cache salvo:", rfidId, "→", matricula);
-
           console.log(`${data.length} vínculos RFID pré-carregados.`);
         } catch (e) {
           console.warn("Falha ao pré-carregar vínculos:", e.message);
         }
       }
-
       // ─── INÍCIO / TROCA DE LINHA ───────────────────────────────────────────────
       function iniciar() {
         const linha = document.getElementById("selLinha").value;
