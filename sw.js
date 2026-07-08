@@ -1,13 +1,12 @@
-const CACHE_NAME = "embarque-v2"; // ← também mudei o nome do cache, explico abaixo
+const CACHE_NAME = "embarque-v4";
 
 const urlsToCache = ["./", "./index.html"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    }),
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache)),
   );
+  self.skipWaiting(); // ← força assumir imediatamente
 });
 
 self.addEventListener("activate", (event) => {
@@ -22,13 +21,13 @@ self.addEventListener("activate", (event) => {
         ),
       ),
   );
-  self.clients.claim();
+  self.clients.claim(); // ← assume controle de todas as abas imediatamente
 });
 
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    }),
+    caches
+      .match(event.request)
+      .then((response) => response || fetch(event.request)),
   );
 });
