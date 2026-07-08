@@ -319,6 +319,7 @@
           const cache = {};
           data.forEach((v) => (cache[v.rfid_id] = v.matricula));
           localStorage.setItem("cache_vinculos", JSON.stringify(cache));
+          console.log("Cache salvo:", rfidId, "→", matricula);
 
           console.log(`${data.length} vínculos RFID pré-carregados.`);
         } catch (e) {
@@ -445,16 +446,20 @@
       // ─── PROCESSAMENTO DA LEITURA RFID ────────────────────────────────────────
       async function processarLeituraRfid(rfidId) {
         console.time("leitura-total");
-        mostrarResultado(`🔍 ${rfidId}`, "info");
-        await new Promise((r) => setTimeout(r, 4000));
 
-        let matricula = null;
-
-        // Tenta o cache local primeiro (muito mais rápido)
+        // Tenta o cache local primeiro
         const cacheVinculos = JSON.parse(
           localStorage.getItem("cache_vinculos") || "{}",
         );
         matricula = cacheVinculos[rfidId];
+        localStorage.setItem(
+          "debug_ultimo_rfid",
+          `lido: ${rfidId} → ${matricula ?? "NAO ENCONTRADO"}`,
+        ); // ← AQUI
+
+        const debug = localStorage.getItem("debug_ultimo_rfid") ?? "sem debug";
+        mostrarResultado(`🔍 ${rfidId} | ${debug}`, "info");
+        await new Promise((r) => setTimeout(r, 4000));
 
         if (!matricula && navigator.onLine) {
           try {
@@ -483,6 +488,10 @@
               "cache_vinculos",
               JSON.stringify(cacheVinculos),
             );
+            localStorage.setItem(
+              "debug_ultimo_rfid",
+              `salvo: ${rfidId} → ${matricula}`,
+            ); // ← AQUI
           } catch (e) {
             console.warn("Consulta online falhou:", e.message);
           }
