@@ -215,13 +215,13 @@
       let contadorEmbarques = 0;
       const historico = [];
 
-      // ─── MATRÍCULAS COM ENDEREÇO DESATUALIZADO (atualizar manualmente quando souber de algum caso) ──
+      // ─── MATRÍCULAS COM ENDEREÇO DESATUALIZADO ──────────────────────────────────
       const MATRICULAS_ENDERECO_DESATUALIZADO = new Set([
         7328, 7685, 7719, 7806, 7835, 7861, 7925, 7942, 7956, 8016, 8020, 8122,
         8130, 8132, 8145,
       ]);
 
-      // ─── HISTÓRICO LOCAL PARA BLOQUEIO OFFLINE ────────────────────────────────────
+      // ─── HISTÓRICO LOCAL PARA BLOQUEIO OFFLINE ──────────────────────────────────
       const CHAVE_HISTORICO_LOCAL = "historico_leituras_local";
 
       function getHistoricoLocal() {
@@ -229,17 +229,17 @@
       }
 
       function salvarHistoricoLocal(matricula, linha, timestamp) {
-        const historico = getHistoricoLocal();
-        historico.push({ matricula, linha, timestamp });
+        const hist = getHistoricoLocal();
+        hist.push({ matricula, linha, timestamp });
         const umDiaAtras = Date.now() - 24 * 60 * 60 * 1000;
-        const limpo = historico.filter((h) => h.timestamp > umDiaAtras);
+        const limpo = hist.filter((h) => h.timestamp > umDiaAtras);
         localStorage.setItem(CHAVE_HISTORICO_LOCAL, JSON.stringify(limpo));
       }
 
       function jaLeuRecente(matricula, linha) {
         const umaHoraAtras = Date.now() - 60 * 60 * 1000;
-        const historico = getHistoricoLocal();
-        return historico.some(
+        const hist = getHistoricoLocal();
+        return hist.some(
           (h) =>
             h.matricula === matricula &&
             h.linha === linha &&
@@ -261,7 +261,7 @@
         osc.stop(ctx.currentTime + 0.15);
       }
 
-      // ─── TIMEOUT MANUAL PARA QUERIES — evita travar com internet "morta" ─────────
+      // ─── TIMEOUT MANUAL PARA QUERIES ────────────────────────────────────────────
       function comTimeout(promise, ms = 8000) {
         return Promise.race([
           promise,
@@ -271,7 +271,7 @@
         ]);
       }
 
-      // ─── CARREGAMENTO DE LINHAS ────────────────────────────────────────────────
+      // ─── CARREGAMENTO DE LINHAS ─────────────────────────────────────────────────
       async function carregarLinhas() {
         const sel = document.getElementById("selLinha");
 
@@ -294,7 +294,6 @@
           }
         }
 
-        // Offline, falhou ou deu timeout — usa cache local
         const cache = JSON.parse(localStorage.getItem("cache_linhas") || "[]");
         sel.innerHTML = cache.length
           ? '<option value="">Selecione...</option>'
@@ -330,7 +329,8 @@
           console.warn("Falha ao pré-carregar vínculos:", e.message);
         }
       }
-      // ─── INÍCIO / TROCA DE LINHA ───────────────────────────────────────────────
+
+      // ─── INÍCIO / TROCA DE LINHA ────────────────────────────────────────────────
       function iniciar() {
         const linha = document.getElementById("selLinha").value;
         if (!linha) {
@@ -340,7 +340,6 @@
 
         linhaAtual = linha;
         document.getElementById("infoLinha").textContent = linha;
-
         document.getElementById("telaConfig").style.display = "none";
         document.getElementById("telaLeitor").style.display = "block";
 
@@ -364,7 +363,6 @@
         if (navigator.onLine) sincronizarFila();
       }
 
-      // Conta embarques de UMA vinda à usina — zera só ao trocar de linha/ônibus
       function trocarLinha() {
         contadorEmbarques = 0;
         historico.length = 0;
@@ -374,7 +372,7 @@
         document.getElementById("telaConfig").style.display = "block";
       }
 
-      // ─── FILA OFFLINE ──────────────────────────────────────────────────────────
+      // ─── FILA OFFLINE ───────────────────────────────────────────────────────────
       const CHAVE_FILA = "embarques_pendentes";
 
       function salvarPendente(registro) {
@@ -418,11 +416,8 @@
               db.from("embarques").insert(registro),
             );
             if (error) {
-              if (error.code === "23505") {
-                sucesso++;
-              } else {
-                restante.push(registro);
-              }
+              if (error.code === "23505") sucesso++;
+              else restante.push(registro);
             } else {
               sucesso++;
             }
@@ -435,7 +430,6 @@
         if (sucesso > 0) console.log(`${sucesso} embarque(s) sincronizado(s).`);
       }
 
-      // Sincroniza automaticamente quando a conexão voltar (único listener)
       window.addEventListener("online", () => {
         console.log("Conexão restabelecida — sincronizando...");
         sincronizarFila();
@@ -446,23 +440,18 @@
         if (navigator.onLine) sincronizarFila();
       }, 15000);
 
-      // ─── PROCESSAMENTO DA LEITURA RFID ────────────────────────────────────────
+      // ─── PROCESSAMENTO DA LEITURA RFID ──────────────────────────────────────────
       async function processarLeituraRfid(rfidId) {
         console.time("leitura-total");
+        mostrarResultado("🔄 Lendo...", "info");
 
-        // Tenta o cache local primeiro
+        // ← CORRIGIDO: declarado com let para ser local a esta execução
+        let matricula = null;
+
         const cacheVinculos = JSON.parse(
           localStorage.getItem("cache_vinculos") || "{}",
         );
-        matricula = cacheVinculos[rfidId];
-        localStorage.setItem(
-          "debug_ultimo_rfid",
-          `lido: ${rfidId} → ${matricula ?? "NAO ENCONTRADO"}`,
-        ); // ← AQUI
-
-        const debug = localStorage.getItem("debug_ultimo_rfid") ?? "sem debug";
-        mostrarResultado(`🔍 ${rfidId} | ${debug}`, "info");
-        await new Promise((r) => setTimeout(r, 4000));
+        matricula = cacheVinculos[rfidId] ?? null;
 
         if (!matricula && navigator.onLine) {
           try {
@@ -491,10 +480,6 @@
               "cache_vinculos",
               JSON.stringify(cacheVinculos),
             );
-            localStorage.setItem(
-              "debug_ultimo_rfid",
-              `salvo: ${rfidId} → ${matricula}`,
-            ); // ← AQUI
           } catch (e) {
             console.warn("Consulta online falhou:", e.message);
           }
@@ -519,7 +504,6 @@
           return;
         }
 
-        // Registra o embarque SEM esperar o GPS
         const agora = new Date();
         const idUnico = `${rfidId}_${agora.getTime()}`;
         const registro = {
@@ -571,7 +555,6 @@
         adicionarHistorico(matricula, horaStr, enderecoDesatualizado);
         console.timeEnd("leitura-total");
 
-        // Busca GPS em segundo plano
         navigator.geolocation.getCurrentPosition(
           async (pos) => {
             if (navigator.onLine) {
@@ -594,6 +577,7 @@
           { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 },
         );
       }
+
       function mostrarResultado(msg, tipo) {
         const el = document.getElementById("resultado");
         el.innerHTML = msg;
@@ -613,15 +597,15 @@
           .slice(0, 20)
           .map(
             (h) => `
-    <div class="historico-item">
-      <span class="mat">${h.matricula}${h.alerta ? ' <span style="color:#b7950b;">⚠️</span>' : ""}</span>
-      <span class="hora">${h.hora}</span>
-    </div>`,
+          <div class="historico-item">
+            <span class="mat">${h.matricula}${h.alerta ? ' <span style="color:#b7950b;">⚠️</span>' : ""}</span>
+            <span class="hora">${h.hora}</span>
+          </div>`,
           )
           .join("");
       }
 
-      // ─── INICIALIZAÇÃO ─────────────────────────────────────────────────────────
+      // ─── INICIALIZAÇÃO ──────────────────────────────────────────────────────────
       async function inicializar() {
         const btn = document.querySelector(".btn");
         btn.textContent = "Carregando...";
