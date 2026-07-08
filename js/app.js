@@ -245,8 +245,7 @@ async function carregarOcupacaoLinhasDashboard() {
     .from("funcionarios")
     .select("*")
     .not("latitude", "is", null)
-    .not("rfid_id", "is", null)
-    // .eq("status", "ativo")
+    .eq("status", "ativo")
     .order("matricula", { ascending: true });
   const { data: pontos } = await db.from("pontos").select("*");
 
@@ -2363,7 +2362,6 @@ async function carregarOcupacao() {
     .from("funcionarios")
     .select("*")
     .not("latitude", "is", null)
-    .not("rfid_id", "is", null)
     .eq("status", "ativo")
     .order("matricula", { ascending: true });
   const { data: pontos } = await db.from("pontos").select("*");
@@ -2476,7 +2474,6 @@ async function carregarOcupacaoPonto() {
     .from("funcionarios")
     .select("*")
     .not("latitude", "is", null)
-    .not("rfid_id", "is", null)
     .eq("status", "ativo")
     .order("matricula", { ascending: true });
   const { data: pontos } = await db.from("pontos").select("*");
@@ -2908,7 +2905,6 @@ async function carregarOcupacaoRota(linha) {
     .from("funcionarios")
     .select("*")
     .not("latitude", "is", null)
-    .not("rfid_id", "is", null)
     .eq("status", "ativo")
     .order("matricula", { ascending: true });
   const { data: pontos } = await db.from("pontos").select("*");
@@ -3251,7 +3247,6 @@ async function carregarMapaOcupacao() {
     .from("funcionarios")
     .select("*")
     .not("latitude", "is", null)
-    .not("rfid_id", "is", null)
     .eq("status", "ativo")
     .order("matricula", { ascending: true });
   const { data: pontos } = await db.from("pontos").select("*");
@@ -3447,7 +3442,6 @@ async function gerarConformidade() {
     .from("funcionarios")
     .select("*")
     .not("latitude", "is", null)
-    .not("rfid_id", "is", null)
     .order("matricula", { ascending: true });
 
   const { data: pontos, error: e3 } = await db.from("pontos").select("*");
