@@ -445,7 +445,8 @@
       // ─── PROCESSAMENTO DA LEITURA RFID ────────────────────────────────────────
       async function processarLeituraRfid(rfidId) {
         console.time("leitura-total");
-        mostrarResultado("🔄 Lendo...", "info");
+        mostrarResultado(`🔍 ${rfidId}`, "info");
+        await new Promise((r) => setTimeout(r, 4000));
 
         let matricula = null;
 
