@@ -194,6 +194,21 @@
           margin-bottom: 12px;
         "
       ></div>
+      <div
+        id="badgeCache"
+        style="
+          background: #e8f5ec;
+          color: #1a4a2e;
+          border-radius: 8px;
+          padding: 8px;
+          text-align: center;
+          font-size: 11px;
+          font-weight: 600;
+          margin-bottom: 12px;
+        "
+      >
+        Cache não carregado
+      </div>
       <button
         class="btn"
         style="background: #eee; color: #333; margin-top: 16px"
@@ -325,6 +340,16 @@
           data.forEach((v) => (cache[v.rfid_id] = v.matricula));
           localStorage.setItem("cache_vinculos", JSON.stringify(cache));
           console.log(`${data.length} vínculos RFID pré-carregados.`);
+
+          // Atualiza o badge com hora e quantidade
+          const agora = new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          const badge = document.getElementById("badgeCache");
+          if (badge) {
+            badge.textContent = `✅ ${data.length} crachás carregados às ${agora}`;
+          }
         } catch (e) {
           console.warn("Falha ao pré-carregar vínculos:", e.message);
         }
