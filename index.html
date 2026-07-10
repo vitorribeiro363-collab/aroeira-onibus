@@ -483,143 +483,297 @@
         if (navigator.onLine) sincronizarFila();
       }, 15000);
 
-      // ─── PROCESSAMENTO DA LEITURA RFID ──────────────────────────────────────────
       async function processarLeituraRfid(rfidId) {
         console.time("leitura-total");
-        mostrarResultado("🔄 Lendo...", "info");
 
-        // ← CORRIGIDO: declarado com let para ser local a esta execução
-        let matricula = null;
-
-        const cacheVinculos = JSON.parse(
-          localStorage.getItem("cache_vinculos") || "{}",
-        );
-        matricula = cacheVinculos[rfidId] ?? null;
-
-        if (!matricula && navigator.onLine) {
-          try {
-            const { data: vinculo, error: errVinculo } = await comTimeout(
-              db
-                .from("funcionarios")
-                .select("matricula")
-                .eq("rfid_id", rfidId)
-                .single(),
-              5000,
-            );
-
-            if (errVinculo || !vinculo) {
-              beep(false);
-              mostrarResultado(
-                "❌ Crachá não cadastrado.<br>Procure a Gestão de Frotas.",
-                "erro",
-              );
-              console.timeEnd("leitura-total");
-              return;
-            }
-
-            matricula = vinculo.matricula;
-            cacheVinculos[rfidId] = matricula;
-            localStorage.setItem(
-              "cache_vinculos",
-              JSON.stringify(cacheVinculos),
-            );
-          } catch (e) {
-            console.warn("Consulta online falhou:", e.message);
-          }
-        }
-
-        if (!matricula) {
-          beep(false);
-          mostrarResultado(
-            navigator.onLine
-              ? "❌ Crachá não cadastrado.<br>Procure a Gestão de Frotas."
-              : "⚠️ Sem internet e crachá não está no cache local.<br>Tente quando houver conexão.",
-            "erro",
-          );
-          console.timeEnd("leitura-total");
-          return;
-        }
-
-        if (jaLeuRecente(matricula, linhaAtual)) {
-          beep(false);
-          mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
-          console.timeEnd("leitura-total");
-          return;
-        }
+        // ─── CAPTURA IMEDIATA — não espera validação ───────────────────────────
+        contadorEmbarques++;
+        document.getElementById("contador").textContent = contadorEmbarques;
+        beep(true);
 
         const agora = new Date();
         const idUnico = `${rfidId}_${agora.getTime()}`;
-        const registro = {
-          matricula,
-          linha: linhaAtual,
-          hora: agora.toISOString(),
-          latitude: null,
-          longitude: null,
-          id_unico: idUnico,
-        };
-
-        if (navigator.onLine) {
-          try {
-            const { error } = await comTimeout(
-              db.from("embarques").insert(registro),
-            );
-            if (error) salvarPendente(registro);
-          } catch (e) {
-            salvarPendente(registro);
-          }
-        } else {
-          salvarPendente(registro);
-        }
-
-        contadorEmbarques++;
-        document.getElementById("contador").textContent = contadorEmbarques;
-        salvarHistoricoLocal(matricula, linhaAtual, agora.getTime());
-
         const horaStr = agora.toLocaleTimeString("pt-BR", {
           hour: "2-digit",
           minute: "2-digit",
         });
 
-        const enderecoDesatualizado =
-          MATRICULAS_ENDERECO_DESATUALIZADO.has(matricula);
+        mostrarResultado(`✅ ${horaStr}`, "ok");
 
-        if (enderecoDesatualizado) {
-          beep(true);
-          setTimeout(() => beep(true), 200);
-          mostrarResultado(
-            `✅ ${matricula} — ${horaStr}<br><span style="font-size:14px;color:#b7950b;">⚠️ Endereço desatualizado — entrar em contato com Gestão de Frotas</span>`,
-            "aviso",
+        // ─── VALIDAÇÃO E REGISTRO EM PARALELO ─────────────────────────────────
+        (async () => {
+          let matricula = null;
+          let valido = true;
+
+          // Tenta cache local primeiro
+          const cacheVinculos = JSON.parse(
+            localStorage.getItem("cache_vinculos") || "{}",
           );
-        } else {
-          beep(true);
-          mostrarResultado(`✅ ${matricula} — ${horaStr}`, "ok");
-        }
+          matricula = cacheVinculos[rfidId] ?? null;
 
-        adicionarHistorico(matricula, horaStr, enderecoDesatualizado);
-        console.timeEnd("leitura-total");
-
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            if (navigator.onLine) {
-              try {
-                await comTimeout(
-                  db
-                    .from("embarques")
-                    .update({
-                      latitude: pos.coords.latitude,
-                      longitude: pos.coords.longitude,
-                    })
-                    .eq("id_unico", idUnico),
+          // Se não achou no cache, tenta o banco
+          if (!matricula && navigator.onLine) {
+            try {
+              const { data: vinculo } = await comTimeout(
+                db
+                  .from("funcionarios")
+                  .select("matricula")
+                  .eq("rfid_id", rfidId)
+                  .single(),
+                5000,
+              );
+              if (vinculo) {
+                matricula = vinculo.matricula;
+                cacheVinculos[rfidId] = matricula;
+                localStorage.setItem(
+                  "cache_vinculos",
+                  JSON.stringify(cacheVinculos),
                 );
-              } catch (e) {
-                console.warn("Falha ao salvar GPS:", e.message);
               }
+            } catch (e) {
+              console.warn("Consulta online falhou:", e.message);
             }
-          },
-          (err) => console.warn("GPS falhou:", err.message),
-          { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 },
-        );
+          }
+
+          // Se não encontrou em lugar nenhum, marca como inválido
+          if (!matricula) {
+            valido = false;
+            matricula = null;
+          }
+
+          // Verifica duplicata (só se válido)
+          if (valido && jaLeuRecente(matricula, linhaAtual)) {
+            // Não registra de novo, só avisa discretamente
+            mostrarResultado(
+              `⚠️ ${matricula} já embarcou — ${horaStr}`,
+              "aviso",
+            );
+            contadorEmbarques--;
+            document.getElementById("contador").textContent = contadorEmbarques;
+            beep(false);
+            console.timeEnd("leitura-total");
+            return;
+          }
+
+          // Monta o registro
+          const registro = {
+            matricula,
+            linha: linhaAtual,
+            hora: agora.toISOString(),
+            latitude: null,
+            longitude: null,
+            id_unico: idUnico,
+            valido,
+          };
+
+          // Salva no banco ou na fila offline
+          if (navigator.onLine) {
+            try {
+              const { error } = await comTimeout(
+                db.from("embarques").insert(registro),
+              );
+              if (error) salvarPendente(registro);
+            } catch (e) {
+              salvarPendente(registro);
+            }
+          } else {
+            salvarPendente(registro);
+          }
+
+          if (valido) {
+            salvarHistoricoLocal(matricula, linhaAtual, agora.getTime());
+
+            const enderecoDesatualizado =
+              MATRICULAS_ENDERECO_DESATUALIZADO.has(matricula);
+
+            if (enderecoDesatualizado) {
+              setTimeout(() => beep(true), 200);
+              mostrarResultado(
+                `✅ ${matricula} — ${horaStr}<br><span style="font-size:14px;color:#b7950b;">⚠️ Endereço desatualizado — entrar em contato com Gestão de Frotas</span>`,
+                "aviso",
+              );
+            } else {
+              mostrarResultado(`✅ ${matricula} — ${horaStr}`, "ok");
+            }
+
+            adicionarHistorico(matricula, horaStr, enderecoDesatualizado);
+          } else {
+            // Crachá não identificado — avisa discretamente sem travar
+            mostrarResultado(
+              `⚠️ Crachá não identificado — ${horaStr}<br><span style="font-size:12px;">Registro salvo para análise</span>`,
+              "aviso",
+            );
+            adicionarHistorico(`?? (${rfidId.slice(-4)})`, horaStr, true);
+          }
+
+          console.timeEnd("leitura-total");
+
+          // GPS em segundo plano
+          if (valido) {
+            navigator.geolocation.getCurrentPosition(
+              async (pos) => {
+                if (navigator.onLine) {
+                  try {
+                    await comTimeout(
+                      db
+                        .from("embarques")
+                        .update({
+                          latitude: pos.coords.latitude,
+                          longitude: pos.coords.longitude,
+                        })
+                        .eq("id_unico", idUnico),
+                    );
+                  } catch (e) {
+                    console.warn("Falha ao salvar GPS:", e.message);
+                  }
+                }
+              },
+              (err) => console.warn("GPS falhou:", err.message),
+              { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 },
+            );
+          }
+        })();
+
+        console.timeEnd("leitura-total");
       }
+
+      // ─── PROCESSAMENTO DA LEITURA RFID ──────────────────────────────────────────
+      // async function processarLeituraRfid(rfidId) {
+      //   console.time("leitura-total");
+      //   mostrarResultado("🔄 Lendo...", "info");
+
+      //   // ← CORRIGIDO: declarado com let para ser local a esta execução
+      //   let matricula = null;
+
+      //   const cacheVinculos = JSON.parse(
+      //     localStorage.getItem("cache_vinculos") || "{}",
+      //   );
+      //   matricula = cacheVinculos[rfidId] ?? null;
+
+      //   if (!matricula && navigator.onLine) {
+      //     try {
+      //       const { data: vinculo, error: errVinculo } = await comTimeout(
+      //         db
+      //           .from("funcionarios")
+      //           .select("matricula")
+      //           .eq("rfid_id", rfidId)
+      //           .single(),
+      //         5000,
+      //       );
+
+      //       if (errVinculo || !vinculo) {
+      //         beep(false);
+      //         mostrarResultado(
+      //           "❌ Crachá não cadastrado.<br>Procure a Gestão de Frotas.",
+      //           "erro",
+      //         );
+      //         console.timeEnd("leitura-total");
+      //         return;
+      //       }
+
+      //       matricula = vinculo.matricula;
+      //       cacheVinculos[rfidId] = matricula;
+      //       localStorage.setItem(
+      //         "cache_vinculos",
+      //         JSON.stringify(cacheVinculos),
+      //       );
+      //     } catch (e) {
+      //       console.warn("Consulta online falhou:", e.message);
+      //     }
+      //   }
+
+      //   if (!matricula) {
+      //     beep(false);
+      //     mostrarResultado(
+      //       navigator.onLine
+      //         ? "❌ Crachá não cadastrado.<br>Procure a Gestão de Frotas."
+      //         : "⚠️ Sem internet e crachá não está no cache local.<br>Tente quando houver conexão.",
+      //       "erro",
+      //     );
+      //     console.timeEnd("leitura-total");
+      //     return;
+      //   }
+
+      //   if (jaLeuRecente(matricula, linhaAtual)) {
+      //     beep(false);
+      //     mostrarResultado(`⚠️ ${matricula} já embarcou`, "aviso");
+      //     console.timeEnd("leitura-total");
+      //     return;
+      //   }
+
+      //   const agora = new Date();
+      //   const idUnico = `${rfidId}_${agora.getTime()}`;
+      //   const registro = {
+      //     matricula,
+      //     linha: linhaAtual,
+      //     hora: agora.toISOString(),
+      //     latitude: null,
+      //     longitude: null,
+      //     id_unico: idUnico,
+      //   };
+
+      //   if (navigator.onLine) {
+      //     try {
+      //       const { error } = await comTimeout(
+      //         db.from("embarques").insert(registro),
+      //       );
+      //       if (error) salvarPendente(registro);
+      //     } catch (e) {
+      //       salvarPendente(registro);
+      //     }
+      //   } else {
+      //     salvarPendente(registro);
+      //   }
+
+      //   contadorEmbarques++;
+      //   document.getElementById("contador").textContent = contadorEmbarques;
+      //   salvarHistoricoLocal(matricula, linhaAtual, agora.getTime());
+
+      //   const horaStr = agora.toLocaleTimeString("pt-BR", {
+      //     hour: "2-digit",
+      //     minute: "2-digit",
+      //   });
+
+      //   const enderecoDesatualizado =
+      //     MATRICULAS_ENDERECO_DESATUALIZADO.has(matricula);
+
+      //   if (enderecoDesatualizado) {
+      //     beep(true);
+      //     setTimeout(() => beep(true), 200);
+      //     mostrarResultado(
+      //       `✅ ${matricula} — ${horaStr}<br><span style="font-size:14px;color:#b7950b;">⚠️ Endereço desatualizado — entrar em contato com Gestão de Frotas</span>`,
+      //       "aviso",
+      //     );
+      //   } else {
+      //     beep(true);
+      //     mostrarResultado(`✅ ${matricula} — ${horaStr}`, "ok");
+      //   }
+
+      //   adicionarHistorico(matricula, horaStr, enderecoDesatualizado);
+      //   console.timeEnd("leitura-total");
+
+      //   navigator.geolocation.getCurrentPosition(
+      //     async (pos) => {
+      //       if (navigator.onLine) {
+      //         try {
+      //           await comTimeout(
+      //             db
+      //               .from("embarques")
+      //               .update({
+      //                 latitude: pos.coords.latitude,
+      //                 longitude: pos.coords.longitude,
+      //               })
+      //               .eq("id_unico", idUnico),
+      //           );
+      //         } catch (e) {
+      //           console.warn("Falha ao salvar GPS:", e.message);
+      //         }
+      //       }
+      //     },
+      //     (err) => console.warn("GPS falhou:", err.message),
+      //     { timeout: 10000, enableHighAccuracy: true, maximumAge: 60000 },
+      //   );
+      // }
 
       function mostrarResultado(msg, tipo) {
         const el = document.getElementById("resultado");
