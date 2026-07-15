@@ -339,7 +339,7 @@
           const cache = {};
           data.forEach((v) => (cache[v.rfid_id] = v.matricula));
           localStorage.setItem("cache_vinculos", JSON.stringify(cache));
-          console.log(`${data.length} vínculos RFID pré-carregados.`);
+          console.log(`${data.length} vínculos RFID pré-carregados. V.2.0`);
 
           // Atualiza o badge com hora e quantidade
           const agora = new Date().toLocaleTimeString("pt-BR", {
