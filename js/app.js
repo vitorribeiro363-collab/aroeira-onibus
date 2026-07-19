@@ -3564,7 +3564,12 @@ async function gerarConformidade() {
     } else {
       statusTexto = "Divergente";
       statusCor = "var(--erro)";
-      pontoRealFinal = `${parseFloat(e.latitude).toFixed(6)}, ${parseFloat(e.longitude).toFixed(6)}`;
+      // Se o embarque foi a menos de 200m de algum ponto, mostra o nome
+      if (menorDist * 1000 <= 200) {
+        pontoRealFinal = pontoReal; // já tem o nome do ponto mais próximo
+      } else {
+        pontoRealFinal = `${parseFloat(e.latitude).toFixed(6)}, ${parseFloat(e.longitude).toFixed(6)}`;
+      }
     }
 
     dadosConformidade.push({
