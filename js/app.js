@@ -3584,12 +3584,13 @@ async function gerarConformidade() {
       linha_alocada: linhaAlocada,
       ponto_alocado: pontoAlocado,
       ponto_real: pontoRealFinal,
-      ponto_real_lat: e.latitude,
-      ponto_real_lon: e.longitude,
       coords_real:
         e.latitude && e.longitude
           ? `${parseFloat(e.latitude).toFixed(6)}, ${parseFloat(e.longitude).toFixed(6)}`
           : null,
+      ponto_real_lat: e.latitude,
+      ponto_real_lon: e.longitude,
+
       distancia_m: Math.round(menorDist * 1000),
       distancia_esperado_m:
         distanciaDoEsperado !== null ? Math.round(distanciaDoEsperado) : null,
