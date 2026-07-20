@@ -3586,6 +3586,10 @@ async function gerarConformidade() {
       ponto_real: pontoRealFinal,
       ponto_real_lat: e.latitude,
       ponto_real_lon: e.longitude,
+      coords_real:
+        e.latitude && e.longitude
+          ? `${parseFloat(e.latitude).toFixed(6)}, ${parseFloat(e.longitude).toFixed(6)}`
+          : null,
       distancia_m: Math.round(menorDist * 1000),
       distancia_esperado_m:
         distanciaDoEsperado !== null ? Math.round(distanciaDoEsperado) : null,
@@ -3668,7 +3672,7 @@ function renderTabelaConformidade() {
             <td>${d.ponto_alocado}</td>
             <td>${
               !d.conforme && !d.naUsina
-                ? `<a href="https://www.google.com/maps?q=${d.ponto_real}" target="_blank" style="color:var(--verde-medio);">${d.ponto_real} 🔗</a>`
+                ? `${d.ponto_real}${d.coords_real ? ` <a href="https://www.google.com/maps?q=${d.coords_real}" target="_blank">🔗</a>` : ""}`
                 : d.ponto_real
             }</td>
             <td style="text-align:center;font-weight:700;color:${d.statusCor};">
